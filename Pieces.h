@@ -57,6 +57,6 @@ SquareDistances CalculateDistances(int squareIndex);
 std::vector<Move> GenerateSlidingMoves(int indexOnBoard, int pieceType, const BoardState& board);
 std::vector<Move> GenerateKnightMoves(int indexOnBoard, int pieceType, const BoardState& board);
 std::vector<Move> GeneratePawnMoves(int indexOnBoard, int pieceType, const BoardState& board);
-std::vector<Move> GenerateKingMove(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags);
+std::vector<Move> GenerateKingMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags);
 bool CanCastle(int kingType, bool kingSide, const BoardState& board, const GameRuleFlags& flags);
 int FindKingLocation(int kingColor, const BoardState& board);

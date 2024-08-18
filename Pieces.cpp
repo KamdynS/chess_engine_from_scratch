@@ -5,7 +5,7 @@
 #include <algorithm>
 
 const std::vector<std::pair<int, int>> DIRECTIONS = {
-    {0, 1}, {1, 0}, {0, -1}, {-1, 0},  // Add your direction pairs here
+    {0, 1}, {1, 0}, {0, -1}, {-1, 0},  
     {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
 };
 
@@ -146,7 +146,7 @@ std::vector<Move> GeneratePawnMoves(int indexOnBoard, int pieceType, const Board
     return moves;
 }
 
-std::vector<Move> GenerateKingMove(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags) {
+std::vector<Move> GenerateKingMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags) {
     std::vector<Move> moves;
     int currentRow = indexOnBoard / 8;
     int currentCol = indexOnBoard % 8;
@@ -157,7 +157,7 @@ std::vector<Move> GenerateKingMove(int indexOnBoard, int pieceType, const BoardS
         int newCol = currentCol + DIRECTIONS[i].second;
 
         if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) {
-            break;  // Off the board
+            continue;  // Off the board
         }
         int target = (newRow * 8) + newCol;
         if (board[target] != Piece::None) {
@@ -190,15 +190,17 @@ std::vector<Move> GenerateKingMove(int indexOnBoard, int pieceType, const BoardS
         castlingMove.rookTargetSquare = castlingMove.rookStartSquare + 3;
         moves.push_back(castlingMove);
     }
-
+    std::cout << "King Moves Generated: " << moves.size() << std::endl;
     return moves;
 }
 
 bool CanCastle(int kingType, bool kingSide, const BoardState& board, const GameRuleFlags& flags) {
-    // Check if any piece has moved yet
-    int kingLocation = FindKingLocation(kingType, board);
-    
-    if ((kingType & Piece::White) == Piece::White) {
+    int kingColor = (kingType & Piece::White) ? Piece::White : Piece::Black;
+    int oppositeColor = (kingColor == Piece::White) ? Piece::Black : Piece::White;
+    int kingStartSquare = (kingColor == Piece::White) ? ChessSquares::E1 : ChessSquares::E8;
+
+    // Check if king or rook has moved
+    if (kingColor == Piece::White) {
         if (flags.whiteKingHasMoved) return false;
         if (kingSide && flags.h1RookHasMoved) return false;
         if (!kingSide && flags.a1RookHasMoved) return false;
@@ -209,66 +211,18 @@ bool CanCastle(int kingType, bool kingSide, const BoardState& board, const GameR
         if (!kingSide && flags.a8RookHasMoved) return false;
     }
 
-    // Check for pieces between king and rook
-    if (!(
-        (kingType & Piece::White) == Piece::White &&
-        kingSide &&
-        board[ChessSquares::F1] == Piece::None &&
-        board[ChessSquares::G1] == Piece::None
-        )) {
-        return false;
-    }
-    else if (!(
-        (kingType & Piece::White) == Piece::White &&
-        !kingSide &&
-        board[ChessSquares::D1] == Piece::None &&
-        board[ChessSquares::C1] == Piece::None &&
-        board[ChessSquares::B1] == Piece::None
-        )) {
-        return false;
-    }
-    else if (!(
-        (kingType & Piece::Black) == Piece::Black &&
-        kingSide &&
-        board[ChessSquares::F8] == Piece::None &&
-        board[ChessSquares::G8] == Piece::None
-        )) {
-        return false;
-    }
-    else if (!(
-        (kingType & Piece::Black) == Piece::Black &&
-        !kingSide &&
-        board[ChessSquares::D8] == Piece::None &&
-        board[ChessSquares::C8] == Piece::None &&
-        board[ChessSquares::B8] == Piece::None
-        )) {
-        return false;
+    // Check if squares between king and rook are empty
+    int direction = kingSide ? 1 : -1;
+    for (int i = 1; i <= (kingSide ? 2 : 3); i++) {
+        if (board[kingStartSquare + i * direction] != Piece::None) return false;
     }
 
-    // Check if king is in check
-    if (IsSquareAttacked(kingLocation, board, flags)) {
-        return false;
+    // Check if king is in check or passes through attacked square
+    for (int i = 0; i <= 2; i++) {
+        if (IsSquareAttackedSimple(kingStartSquare + i * direction, oppositeColor, board)) return false;
     }
 
-    // Check if king passes through attacked square
-    if (kingSide) {
-        if (IsSquareAttacked(kingLocation + 1, board, flags) || IsSquareAttacked(kingLocation + 2, board, flags)) return false;
-    }
-    else {
-        if (IsSquareAttacked(kingLocation - 1, board, flags) || IsSquareAttacked(kingLocation - 2, board, flags) || IsSquareAttacked(kingLocation - 3, board, flags)) return false;
-    }
-
-    // Ensure that the rooks are in the positions they need to be in
-    if ((kingType & Piece::White) == Piece::White) {
-        if (kingSide && board[ChessSquares::H1] != Piece::WhiteRook) return false;
-        if (!kingSide && board[ChessSquares::A1] != Piece::WhiteRook) return false;
-    }
-    else {
-        if (kingSide && board[ChessSquares::H8] != Piece::BlackRook) return false;
-        if (!kingSide && board[ChessSquares::A8] != Piece::BlackRook) return false;
-    }
-
-    return true; // If all conditions are met
+    return true;
 }
 
 int FindKingLocation(int kingColor, const BoardState& board) {

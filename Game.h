@@ -6,5 +6,4 @@ std::vector<Move> GenerateLegalMoves(int currentPiece, int moveCount, int indexO
 bool IsPieceWhite(int pieceType);
 bool IsWhiteMove(int pieceType);
 bool IsCorrectMove(int pieceType, int moveCount);
-std::vector<int> PiecesAttackingCurrentSquare(int indexOfSquare, const BoardState& board, const GameRuleFlags&);
-bool IsSquareAttacked(int indexOfSquare, const BoardState& board, const GameRuleFlags&);
+bool IsSquareAttackedSimple(int square, int attackingColor, const BoardState& board);

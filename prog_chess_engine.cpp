@@ -90,6 +90,8 @@ int main(void) {
                 UpdateGameFlags(gameFlags, selectedPieceIndex);
                 moveCount++;
                 std::cout << "Move count: " << moveCount << std::endl;
+                std::cout << "Rook flag: " << gameFlags.a1RookHasMoved << std::endl;
+                std::cout << "King flag: " << gameFlags.whiteKingHasMoved << std::endl;
             }
             else {
                 // If the move is not legal, ensure the piece stays in its original position
