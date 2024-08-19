@@ -78,15 +78,17 @@ int main(void) {
             std::cout << "Piece type: " << board[selectedPieceIndex] << std::endl;
 
             bool isLegalMove = false;
+            Move selectedMove;
             for (const auto& move : currentLegalMoves) {
                 if (move.targetSquare == newIndex) {
+                    selectedMove = move;
                     isLegalMove = true;
                     break;
                 }
             }
 
             if (newIndex != selectedPieceIndex && isLegalMove) {
-                UpdateBoardState(board, selectedPieceIndex, newIndex, board[selectedPieceIndex]);
+                UpdateBoardState(board, selectedMove, board[selectedPieceIndex]);
                 UpdateGameFlags(gameFlags, selectedPieceIndex);
                 moveCount++;
                 std::cout << "Move count: " << moveCount << std::endl;

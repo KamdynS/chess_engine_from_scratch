@@ -79,17 +79,17 @@ void DrawPieces(const BoardState& board, int selectedPieceIndex) {
     }
 }
 
-void UpdateBoardState(BoardState& board, int oldPos, int newPos, int pieceType) {
-    if (oldPos != newPos) {  // Only update if the piece actually moved
-        board[oldPos] = Piece::None;
-        board[newPos] = pieceType;
+void UpdateBoardState(BoardState& board, const Move& move, int pieceType) {
+    if (move.startSquare != move.targetSquare) {  // Only update if the piece actually moved
+        board[move.startSquare] = Piece::None;
+        board[move.targetSquare] = pieceType;
 
         // Update chessPieces array
         for (int i = 0; i < 32; i++) {
-            if (chessPieces[i].position.x == (oldPos % BOARD_SIZE) * SQUARE_SIZE &&
-                chessPieces[i].position.y == (oldPos / BOARD_SIZE) * SQUARE_SIZE) {
-                chessPieces[i].position.x = (newPos % BOARD_SIZE) * SQUARE_SIZE;
-                chessPieces[i].position.y = (newPos / BOARD_SIZE) * SQUARE_SIZE;
+            if (chessPieces[i].position.x == (move.startSquare % BOARD_SIZE) * SQUARE_SIZE &&
+                chessPieces[i].position.y == (move.startSquare / BOARD_SIZE) * SQUARE_SIZE) {
+                chessPieces[i].position.x = (move.targetSquare % BOARD_SIZE) * SQUARE_SIZE;
+                chessPieces[i].position.y = (move.targetSquare / BOARD_SIZE) * SQUARE_SIZE;
                 chessPieces[i].midpoint.x = chessPieces[i].position.x + SQUARE_SIZE / 2.0f;
                 chessPieces[i].midpoint.y = chessPieces[i].position.y + SQUARE_SIZE / 2.0f;
                 chessPieces[i].type = pieceType;
@@ -97,12 +97,32 @@ void UpdateBoardState(BoardState& board, int oldPos, int newPos, int pieceType) 
             }
         }
 
-        std::cout << "Moved piece from " << oldPos << " to " << newPos << std::endl;
+        std::cout << "Moved piece from " << move.startSquare << " to " << move.targetSquare << std::endl;
         for (int i = 0; i < TOTAL_SQUARES; i++) {
             std::cout << board[i] << " ";
             if ((i + 1) % BOARD_SIZE == 0) std::cout << std::endl;
         }
         std::cout << std::endl;
+    }
+
+    if (move.isCastling) {
+        // Move the rook
+        board[move.rookStartSquare] = Piece::None;
+        board[move.rookTargetSquare] = (pieceType & Piece::White) ? Piece::WhiteRook : Piece::BlackRook;
+
+        // Update chessPieces array for the rook
+        for (int i = 0; i < 32; i++) {
+            if (chessPieces[i].position.x == (move.rookStartSquare % BOARD_SIZE) * SQUARE_SIZE &&
+                chessPieces[i].position.y == (move.rookStartSquare / BOARD_SIZE) * SQUARE_SIZE) {
+                chessPieces[i].position.x = (move.rookTargetSquare % BOARD_SIZE) * SQUARE_SIZE;
+                chessPieces[i].position.y = (move.rookTargetSquare / BOARD_SIZE) * SQUARE_SIZE;
+                chessPieces[i].midpoint.x = chessPieces[i].position.x + SQUARE_SIZE / 2.0f;
+                chessPieces[i].midpoint.y = chessPieces[i].position.y + SQUARE_SIZE / 2.0f;
+                break;
+            }
+        }
+
+        std::cout << "Castling: Moved rook from " << move.rookStartSquare << " to " << move.rookTargetSquare << std::endl;
     }
 }
 
@@ -127,23 +147,6 @@ void UpdateGameFlags(GameRuleFlags& gameFlags, int selectedPieceIndex) {
     }
 }
 
-void SnapPieceToSquare(ChessPiece* piece, BoardState& board) {
-    int oldPos = (piece->position.y) / SQUARE_SIZE * BOARD_SIZE +
-        (piece->position.x) / SQUARE_SIZE;
-
-    for (int i = 0; i < TOTAL_SQUARES; i++) {
-        if (CheckCollisionPointRec(piece->midpoint, boardSquares[i].bounds)) {
-            piece->position = Vector2{
-                boardSquares[i].bounds.x,
-                boardSquares[i].bounds.y
-            };
-            piece->midpoint = boardSquares[i].center;
-
-            UpdateBoardState(board, oldPos, i, piece->type);
-            break;
-        }
-    }
-}
 
 void InitializeBoardSquares() {
     for (int i = 0; i < TOTAL_SQUARES; i++) {
