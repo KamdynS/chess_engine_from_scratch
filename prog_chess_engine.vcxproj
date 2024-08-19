@@ -127,6 +127,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BitBoard.cpp" />
+    <ClCompile Include="BitboardOps.cpp" />
     <ClCompile Include="Board.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Pieces.cpp" />
@@ -147,6 +149,8 @@
     <Image Include="..\..\..\..\..\Downloads\white_rook.png" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BitBoard.h" />
+    <ClInclude Include="BitboardOps.h" />
     <ClInclude Include="Board.h" />
     <ClInclude Include="CommonComponents.h" />
     <ClInclude Include="Game.h" />
