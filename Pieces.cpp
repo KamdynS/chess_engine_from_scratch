@@ -105,7 +105,7 @@ std::vector<Move> GenerateKnightMoves(int indexOnBoard, int pieceType, const Boa
     return moves;
 }
 
-std::vector<Move> GeneratePawnMoves(int indexOnBoard, int pieceType, const BoardState& board) {
+std::vector<Move> GeneratePawnMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags) {
     std::vector<Move> moves;
     int currentRow = indexOnBoard / 8;
     int currentCol = indexOnBoard % 8;
@@ -139,6 +139,21 @@ std::vector<Move> GeneratePawnMoves(int indexOnBoard, int pieceType, const Board
             if (board[target] != Piece::None &&
                 ((board[target] & Piece::White) != (pieceType & Piece::White))) {
                 moves.push_back({ indexOnBoard, target });
+            }
+        }
+    }
+
+    if (flags.enPassantTargetSquare != -1) {
+        // Check if the current pawn is in the correct position to make an en passant capture
+        if ((pieceType & Piece::White && indexOnBoard / 8 == 3) ||
+            (pieceType & Piece::Black && indexOnBoard / 8 == 4)) {
+            // Check if the en passant target is adjacent to the pawn
+            if (abs(indexOnBoard % 8 - flags.enPassantTargetSquare % 8) == 1) {
+                Move enPassantMove;
+                enPassantMove.startSquare = indexOnBoard;
+                enPassantMove.targetSquare = flags.enPassantTargetSquare;
+                enPassantMove.isEnPassant = true;
+                moves.push_back(enPassantMove);
             }
         }
     }

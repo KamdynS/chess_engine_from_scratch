@@ -79,7 +79,7 @@ void DrawPieces(const BoardState& board, int selectedPieceIndex) {
     }
 }
 
-void UpdateBoardState(BoardState& board, const Move& move, int pieceType) {
+void UpdateBoardState(BoardState& board, const Move& move, int pieceType, GameRuleFlags& flags) {
     if (move.startSquare != move.targetSquare) {  // Only update if the piece actually moved
         board[move.startSquare] = Piece::None;
         board[move.targetSquare] = pieceType;
@@ -123,6 +123,28 @@ void UpdateBoardState(BoardState& board, const Move& move, int pieceType) {
         }
 
         std::cout << "Castling: Moved rook from " << move.rookStartSquare << " to " << move.rookTargetSquare << std::endl;
+    }
+    if ((pieceType & Piece::Pawn) && abs(move.startSquare - move.targetSquare) == 16) {
+        flags.enPassantTargetSquare = (move.startSquare + move.targetSquare) / 2;
+    }
+    else {
+        flags.enPassantTargetSquare = -1;
+    }
+
+    if (move.isEnPassant) {
+        int capturedPawnSquare = move.targetSquare + (IsPieceWhite(pieceType) ? 8 : -8);
+        board[capturedPawnSquare] = Piece::None;
+
+        // Remove the captured pawn from chessPieces array
+        for (int i = 0; i < 32; i++) {
+            if (chessPieces[i].position.x == (capturedPawnSquare % BOARD_SIZE) * SQUARE_SIZE &&
+                chessPieces[i].position.y == (capturedPawnSquare / BOARD_SIZE) * SQUARE_SIZE) {
+                chessPieces[i].type = Piece::None;
+                break;
+            }
+        }
+
+        std::cout << "En passant capture: Removed pawn at " << capturedPawnSquare << std::endl;
     }
 }
 

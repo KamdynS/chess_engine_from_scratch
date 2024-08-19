@@ -16,7 +16,7 @@ std::vector<Move> GenerateLegalMoves(int currentPiece, int moveCount, int indexO
     case Piece::Knight:
         return GenerateKnightMoves(indexOnBoard, currentPiece, board);
     case Piece::Pawn:
-        return GeneratePawnMoves(indexOnBoard, currentPiece, board);
+        return GeneratePawnMoves(indexOnBoard, currentPiece, board, flags);
     case Piece::King:
         return GenerateKingMoves(indexOnBoard, currentPiece, board, flags);
     default:
@@ -88,3 +88,16 @@ bool IsSquareAttackedSimple(int square, int attackingColor, const BoardState& bo
 
     return false;
 }
+
+bool IsKingInCheck(const BoardState& board, int kingColor) {
+    int kingLocation = FindKingLocation(kingColor, board);
+    if (kingLocation == -1) {
+        // This shouldn't happen in a valid chess position
+        std::cerr << "Error: King not found on the board" << std::endl;
+        return false;
+    }
+
+    int oppositeColor = (kingColor == Piece::White) ? Piece::Black : Piece::White;
+    return IsSquareAttackedSimple(kingLocation, oppositeColor, board);
+}
+

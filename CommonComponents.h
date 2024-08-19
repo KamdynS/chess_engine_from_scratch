@@ -13,6 +13,7 @@ struct Move {
     bool isCastling = false;
     int rookStartSquare = -1;
     int rookTargetSquare = -1;
+    bool isEnPassant = false;
 };
 
 struct GameRuleFlags {
@@ -25,6 +26,8 @@ struct GameRuleFlags {
     bool a8RookHasMoved = false;
     bool h8RookHasMoved = false;
     bool blackKingHasMoved = false;
+
+    int enPassantTargetSquare;
 };
 
 struct ChessSquares {
