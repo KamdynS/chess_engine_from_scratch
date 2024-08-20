@@ -88,16 +88,18 @@ int main(void) {
             }
 
             if (newIndex != selectedPieceIndex && isLegalMove) {
-                UpdateBoardState(board, selectedMove, board[selectedPieceIndex], gameFlags);
+                MakeMove(board, selectedMove, board[selectedPieceIndex], gameFlags);
                 UpdateGameFlags(gameFlags, selectedPieceIndex);
                 moveCount++;
                 std::cout << "Move count: " << moveCount << std::endl;
+                BlackCheckmate(board[selectedPieceIndex], moveCount, selectedPieceIndex, board, gameFlags);
+                WhiteCheckmate(board[selectedPieceIndex], moveCount, selectedPieceIndex, board, gameFlags);
             }
             else {
                 // If the move is not legal, ensure the piece stays in its original position
                 std::cout << "Illegal move. Piece remains at " << selectedPieceIndex << std::endl;
             }
-
+           
             // Clear selection and legal moves
             selectedPieceIndex = -1;
             currentLegalMoves.clear();

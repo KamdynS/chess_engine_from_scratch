@@ -5,6 +5,7 @@
 #include <utility>
 #include <algorithm>
 #include "CommonComponents.h"
+#include "BitBoard.h"
 
 
 class Piece {
@@ -46,6 +47,20 @@ struct SquareDistances {
     int bottomRight;
 };
 
+struct PieceBitboards {
+    Bitboard WhitePawns;
+    Bitboard WhiteKnights;
+    Bitboard WhiteBishops;
+    Bitboard WhiteRooks;
+    Bitboard WhiteQueens;
+    Bitboard WhiteKing;
+    Bitboard BlackPawns;
+    Bitboard BlackKnights;
+    Bitboard BlackBishops;
+    Bitboard BlackRooks;
+    Bitboard BlackQueens;
+    Bitboard BlackKing;
+};
 
 extern std::vector<Move> moveList;
 

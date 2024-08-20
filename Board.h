@@ -30,7 +30,7 @@ void UnloadPieceTextures();
 void DrawChessBoard();
 void DrawPieces(const BoardState& board, int selectedPieceIndex);
 void DrawLegalMoveHighlights(const std::vector<Move>& legalMoves);
-void UpdateBoardState(BoardState& board, const Move& move, int pieceType, GameRuleFlags& flags);
+void MakeMove(BoardState& board, const Move& move, int pieceType, GameRuleFlags& flags);
 void UpdateGameFlags(GameRuleFlags& gameFlags, int selectedPieceIndex);
 void InitializeBoardSquares();
 void InitializeChessPieces(const BoardState& board);

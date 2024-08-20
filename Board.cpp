@@ -79,7 +79,7 @@ void DrawPieces(const BoardState& board, int selectedPieceIndex) {
     }
 }
 
-void UpdateBoardState(BoardState& board, const Move& move, int pieceType, GameRuleFlags& flags) {
+void MakeMove(BoardState& board, const Move& move, int pieceType, GameRuleFlags& flags) {
     if (move.startSquare != move.targetSquare) {  // Only update if the piece actually moved
         board[move.startSquare] = Piece::None;
 
