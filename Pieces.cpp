@@ -118,8 +118,8 @@ std::vector<Move> GeneratePawnMoves(int indexOnBoard, int pieceType, const Board
     if (newRow >= 0 && newRow < 8) {
         int target = newRow * 8 + currentCol;
         if (board[target] == Piece::None) {
-            moves.push_back({ indexOnBoard, target });
-
+            Move move = { indexOnBoard, target };
+            moves.push_back(move);
             // Check double move if it's the pawn's first move
             if ((direction == -1 && currentRow == 6) || (direction == 1 && currentRow == 1)) {
                 newRow += direction;
@@ -138,7 +138,12 @@ std::vector<Move> GeneratePawnMoves(int indexOnBoard, int pieceType, const Board
             int target = (currentRow + direction) * 8 + newCol;
             if (board[target] != Piece::None &&
                 ((board[target] & Piece::White) != (pieceType & Piece::White))) {
-                moves.push_back({ indexOnBoard, target });
+                Move move = { indexOnBoard, target };
+                // Check for promotion
+                if ((direction == -1 && newRow == 0) || (direction == 1 && newRow == 7)) {
+                    move.isPromotion = true;
+                }
+                moves.push_back(move);
             }
         }
     }

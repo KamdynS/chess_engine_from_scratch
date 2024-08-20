@@ -66,6 +66,8 @@ namespace BitboardOps {
         return result;
     }
     // Method using de Bruijn sequence. Very efficient. Not my own code but super fascinating and works well
+    // Can be found here: https://www.chessprogramming.org/BitScan#DeBruijnMultiplation
+    // Referencing for my own sake
 
     const int index64[64] = {
     0,  1, 48,  2, 57, 49, 28,  3,
@@ -82,8 +84,8 @@ namespace BitboardOps {
         const uint64_t debruijn64 = 0x03f79d71b4cb0a89ULL;
         if (b.board == 0) return -1;  // Special case for empty bitboard
 
-        // Isolate LSB. Use debruijn to create a unique pattern in the most significant bits based on the position of the LSB
+        // Isolate LSB. The rest of this cannot be explained with inline comments
         return index64[((b.board & (~b.board + 1)) * debruijn64) >> 58];
     }
 
-}// namespace BitboardOps
+}

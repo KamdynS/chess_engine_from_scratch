@@ -82,7 +82,15 @@ void DrawPieces(const BoardState& board, int selectedPieceIndex) {
 void UpdateBoardState(BoardState& board, const Move& move, int pieceType, GameRuleFlags& flags) {
     if (move.startSquare != move.targetSquare) {  // Only update if the piece actually moved
         board[move.startSquare] = Piece::None;
-        board[move.targetSquare] = pieceType;
+
+        if (move.isPromotion) {
+            // Promote to Queen (you can expand this later for other pieces)
+            board[move.targetSquare] = (pieceType & Piece::White) ? Piece::WhiteQueen : Piece::BlackQueen;
+        }
+        else {
+            board[move.targetSquare] = pieceType;
+            std::cout << "did not promote";
+        }
 
         // Update chessPieces array
         for (int i = 0; i < 32; i++) {
@@ -146,6 +154,7 @@ void UpdateBoardState(BoardState& board, const Move& move, int pieceType, GameRu
 
         std::cout << "En passant capture: Removed pawn at " << capturedPawnSquare << std::endl;
     }
+
 }
 
 void UpdateGameFlags(GameRuleFlags& gameFlags, int selectedPieceIndex) {
