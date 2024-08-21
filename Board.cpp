@@ -79,13 +79,14 @@ void DrawPieces(const BoardState& board, int selectedPieceIndex) {
     }
 }
 
-void MakeMove(BoardState& board, const Move& move, int currentPiece, GameRuleFlags& flags) {
+void MakeMove(BoardState& board, Move& move, int currentPiece, GameRuleFlags& flags) {
     if (move.startSquare != move.targetSquare) {  // Only update if the piece actually moved
         board[move.startSquare] = Piece::None;
 
         if (move.isPromotion) {
             // Promote to Queen (you can expand this later for other pieces)
             board[move.targetSquare] = (currentPiece & Piece::White) ? Piece::WhiteQueen : Piece::BlackQueen;
+            move.promotionPiece = (currentPiece & Piece::White) ? Piece::WhiteQueen : Piece::BlackQueen;
         }
         else {
             board[move.targetSquare] = currentPiece;

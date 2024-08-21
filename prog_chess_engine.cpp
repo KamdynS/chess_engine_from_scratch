@@ -15,6 +15,7 @@ T Clamp(T value, T min, T max) {
 int moveCount{ 1 };
 BoardState board = {};
 GameRuleFlags gameFlags;
+PieceBitboards gameBitboards;
 
 int main(void) {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Chess Engine with raylib");
@@ -90,6 +91,7 @@ int main(void) {
             if (newIndex != selectedPieceIndex && isLegalMove) {
                 MakeMove(board, selectedMove, board[selectedPieceIndex], gameFlags);
                 UpdateGameFlags(gameFlags, selectedPieceIndex);
+                UpdateBitboards(gameBitboards, selectedMove, board[selectedPieceIndex]);
                 moveCount++;
                 std::cout << "Move count: " << moveCount << std::endl;
                 BlackCheckmate(board[selectedPieceIndex], moveCount, selectedPieceIndex, board, gameFlags);

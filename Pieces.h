@@ -48,33 +48,68 @@ struct SquareDistances {
 };
 
 struct PieceBitboards {
-    Bitboard WhitePawns;
-    Bitboard WhiteKnights;
-    Bitboard WhiteBishops;
-    Bitboard WhiteRooks;
-    Bitboard WhiteQueens;
-    Bitboard WhiteKing;
-    Bitboard BlackPawns;
-    Bitboard BlackKnights;
-    Bitboard BlackBishops;
-    Bitboard BlackRooks;
-    Bitboard BlackQueens;
-    Bitboard BlackKing;
+    Bitboard WhitePawns, WhiteKnights, WhiteBishops, WhiteRooks, WhiteQueens, WhiteKing;
+    Bitboard BlackPawns, BlackKnights, BlackBishops, BlackRooks, BlackQueens, BlackKing;
+};
 
-    void UpdateBitboards(Move& move, int currentPiece, PieceBitboards& bitboards) {
-        switch (currentPiece) {
-        case Piece::WhitePawn: {
-            bitboards.WhitePawns.clear(move.startSquare);
-            bitboards.WhitePawns.set(move.targetSquare);
-            Bitboard::BitboardType mask = Bitboard::UNIVERSE & ~(1ULL << move.targetSquare);
-            Bitboard::iterateAllBitboards(bitboards, [&](Bitboard& bb) {
-                bb.board &= mask;
-                }, Piece::WhitePawn);
+// Standalone function to update bitboards
+void UpdateBitboards(PieceBitboards& bitboards, const Move& move, int currentPiece) {
+    // Helper function to get a reference to the appropriate Bitboard
+    auto getBitboard = [&](int pieceType) -> Bitboard& {
+        switch (pieceType) {
+        case Piece::WhitePawn: return bitboards.WhitePawns;
+        case Piece::WhiteKnight: return bitboards.WhiteKnights;
+        case Piece::WhiteBishop: return bitboards.WhiteBishops;
+        case Piece::WhiteRook: return bitboards.WhiteRooks;
+        case Piece::WhiteQueen: return bitboards.WhiteQueens;
+        case Piece::WhiteKing: return bitboards.WhiteKing;
+        case Piece::BlackPawn: return bitboards.BlackPawns;
+        case Piece::BlackKnight: return bitboards.BlackKnights;
+        case Piece::BlackBishop: return bitboards.BlackBishops;
+        case Piece::BlackRook: return bitboards.BlackRooks;
+        case Piece::BlackQueen: return bitboards.BlackQueens;
+        case Piece::BlackKing: return bitboards.BlackKing;
+        default:
+            throw std::invalid_argument("Invalid piece type in getBitboard");
         }
-        
+        };
+
+    // Get the bitboard for the current piece
+    Bitboard& currentBitboard = getBitboard(currentPiece);
+
+    // Update the bitboard for the moving piece
+    currentBitboard.clear(move.startSquare);
+    currentBitboard.set(move.targetSquare);
+
+    // Create a mask for clearing the captured piece (if any)
+    Bitboard::BitboardType captureMask = ~(1ULL << move.targetSquare);
+
+    // Clear the captured piece from all other bitboards
+    for (int pieceType : {Piece::WhitePawn, Piece::WhiteKnight, Piece::WhiteBishop, Piece::WhiteRook, Piece::WhiteQueen, Piece::WhiteKing,
+        Piece::BlackPawn, Piece::BlackKnight, Piece::BlackBishop, Piece::BlackRook, Piece::BlackQueen, Piece::BlackKing}) {
+        if (pieceType != currentPiece) {
+            getBitboard(pieceType).board &= captureMask;
         }
     }
-};
+
+    // Handle special moves
+    if (move.isEnPassant) {
+        int capturedPawnSquare = move.targetSquare + ((currentPiece & Piece::White) ? 8 : -8);
+        getBitboard((currentPiece & Piece::White) ? Piece::BlackPawn : Piece::WhitePawn).clear(capturedPawnSquare);
+    }
+    else if (move.isCastling) {
+        // Update rook position for castling
+        Bitboard& rookBitboard = getBitboard((currentPiece & Piece::White) ? Piece::WhiteRook : Piece::BlackRook);
+        rookBitboard.clear(move.rookStartSquare);
+        rookBitboard.set(move.rookTargetSquare);
+    }
+
+    // Handle pawn promotion
+    if (move.isPromotion) {
+        currentBitboard.clear(move.targetSquare);  // Remove pawn from its bitboard
+        getBitboard(move.promotionPiece).set(move.targetSquare);  // Add the promoted piece to its bitboard
+    }
+}
 
 extern std::vector<Move> moveList;
 

@@ -15,6 +15,7 @@ struct Move {
     int rookTargetSquare = -1;
     bool isEnPassant = false;
     bool isPromotion = false;
+    int promotionPiece;
 };
 
 struct GameRuleFlags {
