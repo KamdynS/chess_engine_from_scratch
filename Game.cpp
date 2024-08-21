@@ -162,7 +162,7 @@ bool WhiteCheckmate(int currentPiece, int moveCount, int indexOnBoard, const Boa
     }
 }
 
-bool GameDrawNoMoves(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags) {
+bool GameDrawStaleMate(int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags) {
     std::vector<Move> possibleMoves;
     for (int i = 0; i <= 63; i++) {
         std::vector<Move> kingMoves = GenerateLegalMoves(board[i], moveCount, indexOnBoard, board, flags);
@@ -177,24 +177,19 @@ bool GameDrawNoMoves(int currentPiece, int moveCount, int indexOnBoard, const Bo
     }
 }
 
-bool GameDrawStalemate(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags) {
-    // Unfinished
-    std::vector<Move> possibleMoves = GenerateLegalMoves(currentPiece, moveCount, indexOnBoard, board, flags);
-    if (possibleMoves.empty() && (!IsKingInCheck(board, Piece::White) && !IsKingInCheck(board, Piece::Black))) {
-        std::cout << "The Game is a draw";
-        return true;
-    }
-    else {
-        return false;
-    }
+bool GameDrawInsufficientMaterial(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags) {
+    // TODO
+    return false;
 }
 
 bool GameDrawFiftyMove(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags) {
     std::vector<Move> possibleMoves = GenerateLegalMoves(currentPiece, moveCount, indexOnBoard, board, flags);
     // TODO
+    return false;
 }
 
 bool GameDrawThreefold(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags) {
     std::vector<Move> possibleMoves = GenerateLegalMoves(currentPiece, moveCount, indexOnBoard, board, flags);
     // TODO
+    return false;
 }

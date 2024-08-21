@@ -60,6 +60,20 @@ struct PieceBitboards {
     Bitboard BlackRooks;
     Bitboard BlackQueens;
     Bitboard BlackKing;
+
+    void UpdateBitboards(Move& move, int currentPiece, PieceBitboards& bitboards) {
+        switch (currentPiece) {
+        case Piece::WhitePawn: {
+            bitboards.WhitePawns.clear(move.startSquare);
+            bitboards.WhitePawns.set(move.targetSquare);
+            Bitboard::BitboardType mask = Bitboard::UNIVERSE & ~(1ULL << move.targetSquare);
+            Bitboard::iterateAllBitboards(bitboards, [&](Bitboard& bb) {
+                bb.board &= mask;
+                }, Piece::WhitePawn);
+        }
+        
+        }
+    }
 };
 
 extern std::vector<Move> moveList;

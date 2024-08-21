@@ -79,16 +79,16 @@ void DrawPieces(const BoardState& board, int selectedPieceIndex) {
     }
 }
 
-void MakeMove(BoardState& board, const Move& move, int pieceType, GameRuleFlags& flags) {
+void MakeMove(BoardState& board, const Move& move, int currentPiece, GameRuleFlags& flags) {
     if (move.startSquare != move.targetSquare) {  // Only update if the piece actually moved
         board[move.startSquare] = Piece::None;
 
         if (move.isPromotion) {
             // Promote to Queen (you can expand this later for other pieces)
-            board[move.targetSquare] = (pieceType & Piece::White) ? Piece::WhiteQueen : Piece::BlackQueen;
+            board[move.targetSquare] = (currentPiece & Piece::White) ? Piece::WhiteQueen : Piece::BlackQueen;
         }
         else {
-            board[move.targetSquare] = pieceType;
+            board[move.targetSquare] = currentPiece;
             std::cout << "did not promote";
         }
 
@@ -100,7 +100,7 @@ void MakeMove(BoardState& board, const Move& move, int pieceType, GameRuleFlags&
                 chessPieces[i].position.y = (move.targetSquare / BOARD_SIZE) * SQUARE_SIZE;
                 chessPieces[i].midpoint.x = chessPieces[i].position.x + SQUARE_SIZE / 2.0f;
                 chessPieces[i].midpoint.y = chessPieces[i].position.y + SQUARE_SIZE / 2.0f;
-                chessPieces[i].type = pieceType;
+                chessPieces[i].type = currentPiece;
                 break;
             }
         }
@@ -116,7 +116,7 @@ void MakeMove(BoardState& board, const Move& move, int pieceType, GameRuleFlags&
     if (move.isCastling) {
         // Move the rook
         board[move.rookStartSquare] = Piece::None;
-        board[move.rookTargetSquare] = (pieceType & Piece::White) ? Piece::WhiteRook : Piece::BlackRook;
+        board[move.rookTargetSquare] = (currentPiece & Piece::White) ? Piece::WhiteRook : Piece::BlackRook;
 
         // Update chessPieces array for the rook
         for (int i = 0; i < 32; i++) {
@@ -132,7 +132,7 @@ void MakeMove(BoardState& board, const Move& move, int pieceType, GameRuleFlags&
 
         std::cout << "Castling: Moved rook from " << move.rookStartSquare << " to " << move.rookTargetSquare << std::endl;
     }
-    if ((pieceType & Piece::Pawn) && abs(move.startSquare - move.targetSquare) == 16) {
+    if ((currentPiece & Piece::Pawn) && abs(move.startSquare - move.targetSquare) == 16) {
         flags.enPassantTargetSquare = (move.startSquare + move.targetSquare) / 2;
     }
     else {
@@ -140,7 +140,7 @@ void MakeMove(BoardState& board, const Move& move, int pieceType, GameRuleFlags&
     }
 
     if (move.isEnPassant) {
-        int capturedPawnSquare = move.targetSquare + (IsPieceWhite(pieceType) ? 8 : -8);
+        int capturedPawnSquare = move.targetSquare + (IsPieceWhite(currentPiece) ? 8 : -8);
         board[capturedPawnSquare] = Piece::None;
 
         // Remove the captured pawn from chessPieces array
