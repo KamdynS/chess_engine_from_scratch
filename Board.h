@@ -24,7 +24,7 @@ extern ChessPiece chessPieces[32];
 extern std::unordered_map<int, Texture2D> pieceTextures;
 
 // Function declarations
-void InitializeBoard(BoardState& board);
+void InitializeBoard(BoardState& board, PieceBitboards& bitboards, const std::string& fen = "");
 void LoadPieceTextures();
 void UnloadPieceTextures();
 void DrawChessBoard();

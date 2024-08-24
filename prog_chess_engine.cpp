@@ -16,12 +16,13 @@ int moveCount{ 1 };
 BoardState board = {};
 GameRuleFlags gameFlags;
 PieceBitboards gameBitboards;
+std::string startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 int main(void) {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Chess Engine with raylib");
 
     std::vector<Move> currentLegalMoves;
-    InitializeBoard(board);
+    InitializeBoard(board, gameBitboards, startingFEN);
     LoadPieceTextures();
 
     int selectedPieceIndex = -1;

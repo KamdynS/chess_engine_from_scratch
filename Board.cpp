@@ -2,26 +2,118 @@
 #include "Pieces.h"
 #include "CommonComponents.h"
 #include <iostream>
+#include <unordered_map>
+#include <string>
+#include <cctype>
 
 Square boardSquares[TOTAL_SQUARES];
 ChessPiece chessPieces[32];
 std::unordered_map<int, Texture2D> pieceTextures;
 
-void InitializeBoard(BoardState& board) {
-    const int initialBoard[TOTAL_SQUARES] = {
-        Piece::BlackRook, Piece::BlackKnight, Piece::BlackBishop, Piece::BlackQueen, Piece::BlackKing, Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook,
-        Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn,
-        Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None,
-        Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None,
-        Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None,
-        Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None,
-        Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn,
-        Piece::WhiteRook, Piece::WhiteKnight, Piece::WhiteBishop, Piece::WhiteQueen, Piece::WhiteKing, Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook
+void InitializeBoardFromFEN(BoardState& board, const std::string& fen) {
+    for (int i = 0; i < TOTAL_SQUARES; i++) {
+        board[i] = Piece::None;
+    } // Start with blank board
+
+    std::unordered_map<char, int> fenToPiece = {
+    {'p', Piece::BlackPawn},
+    {'n', Piece::BlackKnight},
+    {'b', Piece::BlackBishop},
+    {'r', Piece::BlackRook},
+    {'q', Piece::BlackQueen},
+    {'k', Piece::BlackKing},
+    {'P', Piece::WhitePawn},
+    {'N', Piece::WhiteKnight},
+    {'B', Piece::WhiteBishop},
+    {'R', Piece::WhiteRook},
+    {'Q', Piece::WhiteQueen},
+    {'K', Piece::WhiteKing}
     };
 
-    for (int i = 0; i < TOTAL_SQUARES; i++) {
-        board[i] = initialBoard[i];
+    int indexCount = 0;
+
+    size_t firstSpace = fen.find(' ');
+    std::string fenPosition = fen.substr(0, firstSpace);
+    for (char c: fenPosition) {
+        if (std::isdigit(c)) {
+            int emptySquares = c - '0';  // Convert char to int
+            indexCount += emptySquares;  // Skip this many squares
+        }
+        else if (std::isalpha(c)) {
+            board[indexCount] = fenToPiece[c];
+            indexCount++;
+        }
+        else if (c == '/') {
+            indexCount += 8;
+        }
+        else {
+            std::cout << "FEN has unidentified character.";
+        }
     }
+}
+
+int ConvertToBitboardIndex(int boardIndex) {
+    int rank = boardIndex / 8;  // Get the rank (row) of the piece
+    int file = boardIndex % 8;  // Get the file (column) of the piece
+    return file + (7 - rank) * 8;  // Flip the rank and recalculate the index
+}
+
+void UpdateBitboardsFromBoard(PieceBitboards& bitboards, const BoardState& board) {
+    ClearAllBitboards(bitboards);
+
+    // Create a mapping of piece types to bitboard pointers
+    std::unordered_map<int, Bitboard*> pieceToBitboard = {
+        {Piece::WhitePawn, &bitboards.WhitePawns},
+        {Piece::WhiteKnight, &bitboards.WhiteKnights},
+        {Piece::WhiteBishop, &bitboards.WhiteBishops},
+        {Piece::WhiteRook, &bitboards.WhiteRooks},
+        {Piece::WhiteQueen, &bitboards.WhiteQueens},
+        {Piece::WhiteKing, &bitboards.WhiteKing},
+        {Piece::BlackPawn, &bitboards.BlackPawns},
+        {Piece::BlackKnight, &bitboards.BlackKnights},
+        {Piece::BlackBishop, &bitboards.BlackBishops},
+        {Piece::BlackRook, &bitboards.BlackRooks},
+        {Piece::BlackQueen, &bitboards.BlackQueens},
+        {Piece::BlackKing, &bitboards.BlackKing}
+    };
+
+    for (int i = 0; i < TOTAL_SQUARES; ++i) {
+        int piece = board[i];
+        if (piece != Piece::None) {
+            int bitboardIndex = ConvertToBitboardIndex(i);
+
+            auto it = pieceToBitboard.find(piece);
+            if (it != pieceToBitboard.end()) {
+                it->second->set(bitboardIndex);
+            }
+        }
+    }
+}
+void InitializeBoard(BoardState& board, PieceBitboards& bitboards, const std::string& fen = "") {
+    if (fen.empty()) {
+        // Use default board setup
+        const int initialBoard[TOTAL_SQUARES] = {
+            Piece::BlackRook, Piece::BlackKnight, Piece::BlackBishop, Piece::BlackQueen, Piece::BlackKing, Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook,
+            Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn, Piece::BlackPawn,
+            Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None,
+            Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None,
+            Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None,
+            Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None, Piece::None,
+            Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn, Piece::WhitePawn,
+            Piece::WhiteRook, Piece::WhiteKnight, Piece::WhiteBishop, Piece::WhiteQueen, Piece::WhiteKing, Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook
+        };
+
+        for (int i = 0; i < TOTAL_SQUARES; i++) {
+            board[i] = initialBoard[i];
+        }
+    }
+    else {
+        // Use FEN string to set up the board
+        InitializeBoardFromFEN(board, fen);
+    }
+
+    // Update bitboards based on the board state
+    UpdateBitboardsFromBoard(bitboards, board);
 
     InitializeBoardSquares();
     InitializeChessPieces(board);

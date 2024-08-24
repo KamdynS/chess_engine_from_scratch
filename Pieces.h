@@ -111,6 +111,21 @@ void UpdateBitboards(PieceBitboards& bitboards, const Move& move, int currentPie
     }
 }
 
+void ClearAllBitboards(PieceBitboards& bitboards) {
+    bitboards.WhitePawns.board = 0ULL;
+    bitboards.WhiteKnights.board = 0ULL;
+    bitboards.WhiteBishops.board = 0ULL;
+    bitboards.WhiteRooks.board = 0ULL;
+    bitboards.WhiteQueens.board = 0ULL;
+    bitboards.WhiteKing.board = 0ULL;
+    bitboards.BlackPawns.board = 0ULL;
+    bitboards.BlackKnights.board = 0ULL;
+    bitboards.BlackBishops.board = 0ULL;
+    bitboards.BlackRooks.board = 0ULL;
+    bitboards.BlackQueens.board = 0ULL;
+    bitboards.BlackKing.board = 0ULL;
+}
+
 extern std::vector<Move> moveList;
 
 extern const std::vector<std::pair<int, int>> DIRECTIONS;
