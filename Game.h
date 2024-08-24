@@ -1,24 +1,35 @@
 #pragma once
 #include "CommonComponents.h"
+#include "ChessBoard.h"
+#include "Pieces.h"
+#include <vector>
 
-struct MoveInfo {
-    int capturedPiece;
-    bool wasEnPassant;
-    bool wasCastling;
-    int oldEnPassantSquare;
-    GameRuleFlags oldFlags;
+class Game {
+public:
+    Game();
+
+    std::vector<Move> GenerateLegalMoves(int currentPiece, int indexOnBoard) const;
+    std::vector<Move> FilterLegalMoves(const std::vector<Move>& moves, int currentPlayer) const;
+    bool IsPieceWhite(int pieceType) const;
+    bool IsWhiteMove() const;
+    bool IsCorrectMove(int pieceType) const;
+    bool IsSquareAttackedSimple(int square, int attackingColor) const;
+    bool IsKingInCheck(int kingColor) const;
+    bool BlackCheckmate();
+    bool WhiteCheckmate();
+    bool GameDrawStaleMate();
+    bool GameDrawInsufficientMaterial() const;
+    bool GameDrawFiftyMove() const;
+    bool GameDrawThreefold() const;
+
+    const ChessBoard& GetBoard() const { return m_board; }
+    const GameRuleFlags& GetFlags() const { return m_flags; }
+    int GetMoveCount() const { return m_moveCount; }
+
+private:
+    ChessBoard m_board;
+    GameRuleFlags m_flags;
+    int m_moveCount;
+    std::vector<uint64_t> m_positionHistory;
+    PieceManager m_pieceManager;
 };
-
-std::vector<Move> GenerateLegalMoves(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags);
-std::vector<Move> FilterLegalMoves(const BoardState& board, const std::vector<Move>& moves, int currentPlayer, GameRuleFlags flags);
-bool IsPieceWhite(int pieceType);
-bool IsWhiteMove(int move);
-bool IsCorrectMove(int pieceType, int moveCount);
-bool IsSquareAttackedSimple(int square, int attackingColor, const BoardState& board);
-bool IsKingInCheck(const BoardState& board, int kingColor);
-bool BlackCheckmate(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags);
-bool WhiteCheckmate(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags);
-bool GameDrawStaleMate(int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags);
-bool GameDrawInsufficientMaterial(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags);
-bool GameDrawFiftyMove(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags);
-bool GameDrawThreefold(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags);

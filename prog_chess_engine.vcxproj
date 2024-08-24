@@ -129,10 +129,11 @@
   <ItemGroup>
     <ClCompile Include="BitBoard.cpp" />
     <ClCompile Include="BitboardOps.cpp" />
-    <ClCompile Include="Board.cpp" />
+    <ClCompile Include="ChessBoard.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Pieces.cpp" />
     <ClCompile Include="prog_chess_engine.cpp" />
+    <ClCompile Include="ZobristHash.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\..\Downloads\black_bishop.png" />
@@ -151,10 +152,11 @@
   <ItemGroup>
     <ClInclude Include="BitBoard.h" />
     <ClInclude Include="BitboardOps.h" />
-    <ClInclude Include="Board.h" />
+    <ClInclude Include="ChessBoard.h" />
     <ClInclude Include="CommonComponents.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Pieces.h" />
+    <ClInclude Include="ZobristHash.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

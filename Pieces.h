@@ -51,17 +51,21 @@ struct PieceBitboards {
     Bitboard BlackPawns, BlackKnights, BlackBishops, BlackRooks, BlackQueens, BlackKing;
 };
 
-void UpdateBitboards(PieceBitboards& bitboards, const Move& move, int currentPiece);
-void ClearAllBitboards(PieceBitboards& bitboards);
+class PieceManager {
+public:
+    PieceManager();
 
-extern std::vector<Move> moveList;
-extern const std::vector<std::pair<int, int>> DIRECTIONS;
+    SquareDistances CalculateDistances(int squareIndex) const;
+    std::vector<Move> GenerateSlidingMoves(int indexOnBoard, int pieceType, const BoardState& board) const;
+    std::vector<Move> GenerateKnightMoves(int indexOnBoard, int pieceType, const BoardState& board) const;
+    std::vector<Move> GeneratePawnMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags) const;
+    std::vector<Move> GenerateKingMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags) const;
+    bool CanCastle(int kingType, bool kingSide, const BoardState& board, const GameRuleFlags& flags) const;
+    int FindKingLocation(int kingColor, const BoardState& board) const;
+    void UpdateBitboards(PieceBitboards& bitboards, const Move& move, int currentPiece);
+    void ClearAllBitboards(PieceBitboards& bitboards);
 
-// Function declarations
-SquareDistances CalculateDistances(int squareIndex);
-std::vector<Move> GenerateSlidingMoves(int indexOnBoard, int pieceType, const BoardState& board);
-std::vector<Move> GenerateKnightMoves(int indexOnBoard, int pieceType, const BoardState& board);
-std::vector<Move> GeneratePawnMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags);
-std::vector<Move> GenerateKingMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags);
-bool CanCastle(int kingType, bool kingSide, const BoardState& board, const GameRuleFlags& flags);
-int FindKingLocation(int kingColor, const BoardState& board);
+private:
+    std::vector<std::pair<int, int>> m_directions;
+    std::vector<Move> m_moveList;
+};

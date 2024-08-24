@@ -1,10 +1,11 @@
-#include "Board.h"
+#include "ChessBoard.h"
 #include "Pieces.h"
-#include "CommonComponents.h"
 #include <iostream>
-#include <unordered_map>
-#include <string>
 #include <cctype>
+
+ChessBoard::ChessBoard() {
+    InitializeBoard();
+}
 
 Square boardSquares[TOTAL_SQUARES];
 ChessPiece chessPieces[32];
