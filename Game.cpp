@@ -37,7 +37,7 @@ std::vector<Move> Game::GenerateLegalMoves(int currentPiece, int indexOnBoard) c
     }
     case Piece::King:
     {
-        std::vector<Move> kingMoves = m_pieceManager.GenerateKingMoves(indexOnBoard, currentPiece, m_board.GetBoardState(), m_board.GetGameFlags());
+        std::vector<Move> kingMoves = m_pieceManager.GenerateKingMoves(indexOnBoard, currentPiece, m_board.GetBoardState(), m_board.GetGameFlags(), *this);
         allMoves.insert(allMoves.end(), kingMoves.begin(), kingMoves.end());
         break;
     }
@@ -83,7 +83,47 @@ bool Game::IsCorrectMove(int pieceType) const {
 bool Game::IsSquareAttackedSimple(int square, int attackingColor) const {
     const BoardState& board = m_board.GetBoardState();
 
-    // ... (rest of the implementation remains the same)
+    // Check for pawn attacks
+    int pawnDirection = (attackingColor == Piece::White) ? -1 : 1;
+    int pawnAttackLeft = square + pawnDirection * 7;
+    int pawnAttackRight = square + pawnDirection * 9;
+    if (pawnAttackLeft >= 0 && pawnAttackLeft < 64 && board[pawnAttackLeft] == (Piece::Pawn | attackingColor)) return true;
+    if (pawnAttackRight >= 0 && pawnAttackRight < 64 && board[pawnAttackRight] == (Piece::Pawn | attackingColor)) return true;
+
+    // Check for knight attacks
+    int knightMoves[] = { -17, -15, -10, -6, 6, 10, 15, 17 };
+    for (int move : knightMoves) {
+        int targetSquare = square + move;
+        if (targetSquare >= 0 && targetSquare < 64 && board[targetSquare] == (Piece::Knight | attackingColor)) return true;
+    }
+
+    // Check for king attacks (for adjacent squares)
+    int kingMoves[] = { -9, -8, -7, -1, 1, 7, 8, 9 };
+    for (int move : kingMoves) {
+        int targetSquare = square + move;
+        if (targetSquare >= 0 && targetSquare < 64 && board[targetSquare] == (Piece::King | attackingColor)) return true;
+    }
+
+    // Check for sliding piece attacks (rook, bishop, queen)
+    int slidingDirections[] = { -8, 8, -1, 1, -9, 9, -7, 7 };
+    for (int direction : slidingDirections) {
+        int targetSquare = square + direction;
+        while (targetSquare >= 0 && targetSquare < 64) {
+            int piece = board[targetSquare];
+            if (piece != Piece::None) {
+                if ((piece & attackingColor) &&
+                    (piece == (Piece::Queen | attackingColor) ||
+                        (abs(direction) == 8 || abs(direction) == 1) && piece == (Piece::Rook | attackingColor) ||
+                        (abs(direction) == 7 || abs(direction) == 9) && piece == (Piece::Bishop | attackingColor))) {
+                    return true;
+                }
+                break;
+            }
+            targetSquare += direction;
+        }
+    }
+
+    return false;
 }
 
 bool Game::IsKingInCheck(int kingColor) const {

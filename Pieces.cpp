@@ -169,7 +169,7 @@ std::vector<Move> PieceManager::GeneratePawnMoves(int indexOnBoard, int pieceTyp
     return moves;
 }
 
-std::vector<Move> PieceManager::GenerateKingMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags) const {
+std::vector<Move> PieceManager::GenerateKingMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags, const Game& game) const {
     std::vector<Move> moves;
     int currentRow = indexOnBoard / 8;
     int currentCol = indexOnBoard % 8;
@@ -194,7 +194,7 @@ std::vector<Move> PieceManager::GenerateKingMoves(int indexOnBoard, int pieceTyp
     }
 
     // Castle if available
-    if (this->CanCastle(pieceType, true, board, flags)) {  // Kingside
+    if (this->CanCastle(pieceType, true, board, flags, game)) {  // Kingside
         Move castlingMove;
         castlingMove.startSquare = indexOnBoard;
         castlingMove.targetSquare = indexOnBoard + 2;
@@ -204,7 +204,7 @@ std::vector<Move> PieceManager::GenerateKingMoves(int indexOnBoard, int pieceTyp
         moves.push_back(castlingMove);
     }
 
-    if (this->CanCastle(pieceType, false, board, flags)) {  // Queenside
+    if (this->CanCastle(pieceType, false, board, flags, game)) {  // Queenside
         Move castlingMove;
         castlingMove.startSquare = indexOnBoard;
         castlingMove.targetSquare = indexOnBoard - 2;
@@ -217,7 +217,8 @@ std::vector<Move> PieceManager::GenerateKingMoves(int indexOnBoard, int pieceTyp
     return moves;
 }
 
-bool CanCastle(int kingType, bool kingSide, const BoardState& board, const GameRuleFlags& flags) {
+
+bool PieceManager::CanCastle(int kingType, bool kingSide, const BoardState& board, const GameRuleFlags& flags, const Game& game) const {
     int kingColor = (kingType & Piece::White) ? Piece::White : Piece::Black;
     int oppositeColor = (kingColor == Piece::White) ? Piece::Black : Piece::White;
     int kingStartSquare = (kingColor == Piece::White) ? ChessSquares::E1 : ChessSquares::E8;
@@ -242,22 +243,10 @@ bool CanCastle(int kingType, bool kingSide, const BoardState& board, const GameR
 
     // Check if king is in check or passes through attacked square
     for (int i = 0; i <= 2; i++) {
-        if (IsSquareAttackedSimple(kingStartSquare + i * direction, oppositeColor, board)) return false;
+        if (game.IsSquareAttackedSimple(kingStartSquare + i * direction, oppositeColor)) return false;
     }
 
     return true;
-}
-
-bool PieceManager::CanCastle(int kingColor, bool kingSide, const BoardState& board, const GameRuleFlags& flags) const {
-    int targetKing = (kingColor & Piece::White) ? Piece::WhiteKing : Piece::BlackKing;
-
-    for (int i = 0; i < TOTAL_SQUARES; i++) {
-        if (board[i] == targetKing) {
-            return i;
-        }
-    }
-
-    return -1;  // King not found (shouldn't happen in a valid chess position)
 }
 
 // Standalone function to update bitboards

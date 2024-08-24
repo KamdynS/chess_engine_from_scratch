@@ -21,6 +21,7 @@ public:
     bool GameDrawInsufficientMaterial() const;
     bool GameDrawFiftyMove() const;
     bool GameDrawThreefold() const;
+    void IncrementMoveCount() { m_moveCount++; };
 
     const ChessBoard& GetBoard() const { return m_board; }
     const GameRuleFlags& GetFlags() const { return m_flags; }

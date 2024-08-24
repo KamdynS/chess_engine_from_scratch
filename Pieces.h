@@ -6,6 +6,7 @@
 #include <algorithm>
 #include "CommonComponents.h"
 #include "BitBoard.h"
+#include "Game.h"
 
 class Piece {
 public:
@@ -59,8 +60,8 @@ public:
     std::vector<Move> GenerateSlidingMoves(int indexOnBoard, int pieceType, const BoardState& board) const;
     std::vector<Move> GenerateKnightMoves(int indexOnBoard, int pieceType, const BoardState& board) const;
     std::vector<Move> GeneratePawnMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags) const;
-    std::vector<Move> GenerateKingMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags) const;
-    bool CanCastle(int kingType, bool kingSide, const BoardState& board, const GameRuleFlags& flags) const;
+    std::vector<Move> GenerateKingMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags, const Game& game) const;
+    bool CanCastle(int kingType, bool kingSide, const BoardState& board, const GameRuleFlags& flags, const Game& game) const;
     int FindKingLocation(int kingColor, const BoardState& board) const;
     void UpdateBitboards(PieceBitboards& bitboards, const Move& move, int currentPiece);
     void ClearAllBitboards(PieceBitboards& bitboards);
@@ -69,3 +70,10 @@ private:
     std::vector<std::pair<int, int>> m_directions;
     std::vector<Move> m_moveList;
 };
+
+template <typename T>
+T Clamp(T value, T min, T max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}

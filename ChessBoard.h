@@ -26,6 +26,7 @@ public:
     ChessBoard();
     void InitializeBoard(const std::string& fen = "");
     void LoadPieceTextures();
+    const std::unordered_map<int, Texture2D>& GetPieceTextures() const { return m_pieceTextures; }
     void UnloadPieceTextures();
     void DrawChessBoard();
     void DrawPieces(int selectedPieceIndex) const;
@@ -35,9 +36,9 @@ public:
     int ConvertToBitboardIndex(int boardIndex) const;
     bool IsPieceWhite(int pieceType) const;
 
-    const BoardState& GetBoardState() const { return m_board; }
-    const GameRuleFlags& GetGameFlags() const { return m_gameFlags; }
-    const PieceBitboards& GetBitboards() const { return m_bitboards; }
+    BoardState& GetBoardState() { return m_board; }
+    GameRuleFlags& GetGameFlags() { return m_gameFlags; }
+    PieceBitboards& GetBitboards() { return m_bitboards; }
 
 private:
     void InitializeBoardFromFEN(const std::string& fen);
