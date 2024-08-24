@@ -173,6 +173,16 @@ void DrawPieces(const BoardState& board, int selectedPieceIndex) {
 
 void MakeMove(BoardState& board, Move& move, int currentPiece, GameRuleFlags& flags) {
     if (move.startSquare != move.targetSquare) {  // Only update if the piece actually moved
+        bool isPawnMove = (currentPiece & 7) == Piece::Pawn;
+        bool isCapture = board[move.targetSquare] != Piece::None || move.isEnPassant;
+
+        if (isPawnMove || isCapture) {
+            flags.halfMoveClock = 0;
+        }
+        else {
+            flags.halfMoveClock++;
+        }
+
         board[move.startSquare] = Piece::None;
 
         if (move.isPromotion) {

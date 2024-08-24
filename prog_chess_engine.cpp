@@ -3,6 +3,8 @@
 #include "Pieces.h"
 #include "Game.h"
 #include "CommonComponents.h"
+#include "ZobristHash.h"
+#include <vector>
 #include <iostream>
 
 template <typename T>
@@ -12,11 +14,14 @@ T Clamp(T value, T min, T max) {
     return value;
 }
 
+// Meta information
 int moveCount{ 1 };
 BoardState board = {};
 GameRuleFlags gameFlags;
 PieceBitboards gameBitboards;
 std::string startingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+ZobristHash zobristHash;
+std::vector<uint64_t> positionHistory;
 
 int main(void) {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Chess Engine with raylib");
@@ -93,6 +98,8 @@ int main(void) {
                 MakeMove(board, selectedMove, board[selectedPieceIndex], gameFlags);
                 UpdateGameFlags(gameFlags, selectedPieceIndex);
                 UpdateBitboards(gameBitboards, selectedMove, board[selectedPieceIndex]);
+                uint64_t newHash = zobristHash.hash(board, moveCount % 2 == 0, gameFlags);
+                positionHistory.push_back(newHash);
                 moveCount++;
                 std::cout << "Move count: " << moveCount << std::endl;
                 BlackCheckmate(board[selectedPieceIndex], moveCount, selectedPieceIndex, board, gameFlags);

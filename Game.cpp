@@ -2,6 +2,7 @@
 #include "Pieces.h"
 #include "Game.h"
 #include <limits>
+#include <unordered_map>
 
 std::vector<Move> GenerateLegalMoves(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags) {
     if (!IsCorrectMove(currentPiece, moveCount)) {
@@ -177,19 +178,60 @@ bool GameDrawStaleMate(int moveCount, int indexOnBoard, const BoardState& board,
     }
 }
 
-bool GameDrawInsufficientMaterial(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags) {
-    // TODO
+bool GameDrawInsufficientMaterial(const PieceBitboards& bitboards) {
+    // Combine all pieces except kings into a single bitboard
+    Bitboard::BitboardType allPieces =
+        bitboards.WhitePawns.board | bitboards.WhiteKnights.board |
+        bitboards.WhiteBishops.board | bitboards.WhiteRooks.board |
+        bitboards.WhiteQueens.board |
+        bitboards.BlackPawns.board | bitboards.BlackKnights.board |
+        bitboards.BlackBishops.board | bitboards.BlackRooks.board |
+        bitboards.BlackQueens.board;
+
+    // If no pieces left besides kings, it's a draw
+    if (allPieces == 0) return true;
+
+    // If more than 3 pieces, it's not insufficient material
+    if (__builtin_popcountll(allPieces) > 3) return false;
+
+    // Check for single minor piece (bishop or knight)
+    if (__builtin_popcountll(allPieces) == 1) {
+        return (allPieces & (bitboards.WhiteKnights.board | bitboards.BlackKnights.board |
+            bitboards.WhiteBishops.board | bitboards.BlackBishops.board)) != 0;
+    }
+
+    // Check for two knights
+    if (__builtin_popcountll(allPieces) == 2) {
+        return allPieces == bitboards.WhiteKnights.board || allPieces == bitboards.BlackKnights.board;
+    }
+
+    // Check for bishops
+    Bitboard::BitboardType bishopPieces = bitboards.WhiteBishops.board | bitboards.BlackBishops.board;
+    if (allPieces == bishopPieces) {
+        // Check if bishops are on the same color
+        const Bitboard::BitboardType LIGHT_SQUARES = 0x55AA55AA55AA55AAULL;
+        Bitboard::BitboardType lightSquareBishops = allPieces & LIGHT_SQUARES;
+        return (lightSquareBishops == 0 || lightSquareBishops == allPieces);
+    }
+
     return false;
 }
 
-bool GameDrawFiftyMove(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags) {
-    std::vector<Move> possibleMoves = GenerateLegalMoves(currentPiece, moveCount, indexOnBoard, board, flags);
-    // TODO
-    return false;
+bool GameDrawFiftyMove(const GameRuleFlags& flags) {
+    return flags.halfMoveClock >= 100;  // 50 full moves = 100 half-moves
 }
 
-bool GameDrawThreefold(int currentPiece, int moveCount, int indexOnBoard, const BoardState& board, const GameRuleFlags& flags) {
-    std::vector<Move> possibleMoves = GenerateLegalMoves(currentPiece, moveCount, indexOnBoard, board, flags);
-    // TODO
+bool GameDrawThreefold(const std::vector<uint64_t>& positionHistory) {
+    if (positionHistory.size() < 5) return false; // Need at least 5 moves for a threefold repetition
+
+    std::unordered_map<uint64_t, int> positionCounts;
+
+    for (const auto& hash : positionHistory) {
+        positionCounts[hash]++;
+        if (positionCounts[hash] >= 3) {
+            return true;
+        }
+    }
+
     return false;
 }

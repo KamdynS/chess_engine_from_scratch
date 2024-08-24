@@ -30,6 +30,8 @@ struct GameRuleFlags {
     bool blackKingHasMoved = false;
 
     int enPassantTargetSquare;
+
+    int halfMoveClock = 0;
 };
 
 struct ChessSquares {
