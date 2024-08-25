@@ -131,6 +131,8 @@
     <ClCompile Include="BitboardOps.cpp" />
     <ClCompile Include="ChessBoard.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GameManager.cpp" />
+    <ClCompile Include="GameManager.h" />
     <ClCompile Include="Pieces.cpp" />
     <ClCompile Include="prog_chess_engine.cpp" />
     <ClCompile Include="ZobristHash.cpp" />

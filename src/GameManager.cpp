@@ -1,32 +1,38 @@
 #include "GameManager.h"
+#include "GameState.h"
 #include <iostream>
 
 GameManager::GameManager()
-    : m_selectedPieceIndex(-1), m_dragOffset{ 0, 0 } {
+    : m_dragOffset{ 0, 0 } {
 }
 
 void GameManager::initialize() {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Chess Engine with raylib");
     m_board.InitializeBoard();
     m_board.LoadPieceTextures();
+
+    // Register the UpdateChessPieces as an observer
+    registerMoveObserver([this]() { m_board.UpdateChessPieces(); });
 }
 
 void GameManager::processInput() {
+    auto& gameState = GameState::getInstance();
+
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         Vector2 mousePos = GetMousePosition();
         int col = (int)(mousePos.x / SQUARE_SIZE);
         int row = (int)(mousePos.y / SQUARE_SIZE);
         int index = row * BOARD_SIZE + col;
 
-        if (index >= 0 && index < TOTAL_SQUARES && m_board.GetBoardState()[index] != Piece::None) {
-            m_selectedPieceIndex = index;
+        if (index >= 0 && index < TOTAL_SQUARES && gameState.board[index] != Piece::None) {
+            gameState.selectedPieceIndex = index;
             m_dragOffset = { mousePos.x - (col * SQUARE_SIZE + SQUARE_SIZE / 2.0f),
                              mousePos.y - (row * SQUARE_SIZE + SQUARE_SIZE / 2.0f) };
-            m_currentLegalMoves = m_game.GenerateLegalMoves(m_board.GetBoardState()[m_selectedPieceIndex], m_selectedPieceIndex);
+            m_currentLegalMoves = m_game.GenerateLegalMoves(gameState.board[gameState.selectedPieceIndex], gameState.selectedPieceIndex);
         }
     }
 
-    if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && m_selectedPieceIndex != -1) {
+    if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) && gameState.selectedPieceIndex != -1) {
         Vector2 mousePos = GetMousePosition();
         int newCol = Clamp((int)(mousePos.x / SQUARE_SIZE), 0, BOARD_SIZE - 1);
         int newRow = Clamp((int)(mousePos.y / SQUARE_SIZE), 0, BOARD_SIZE - 1);
@@ -42,16 +48,17 @@ void GameManager::processInput() {
             }
         }
 
-        if (newIndex != m_selectedPieceIndex && isLegalMove) {
-            m_board.MakeMove(selectedMove, m_board.GetBoardState()[m_selectedPieceIndex]);
-            m_board.UpdateGameFlags(m_selectedPieceIndex);
-            m_pieceManager.UpdateBitboards(m_board.GetBitboards(), selectedMove, m_board.GetBoardState()[m_selectedPieceIndex]);
-            uint64_t newHash = m_zobristHash.hash(m_board.GetBoardState(), m_game.GetMoveCount() % 2 == 0, m_board.GetGameFlags());
-            m_positionHistory.push_back(newHash);
-            m_game.IncrementMoveCount();
+        if (newIndex != gameState.selectedPieceIndex && isLegalMove) {
+            m_game.MakeMove(selectedMove, gameState.board[gameState.selectedPieceIndex]);
+            m_board.UpdateGameFlags(gameState.selectedPieceIndex);
+            uint64_t newHash = m_zobristHash.hash(gameState.board, gameState.moveCount % 2 == 0, gameState.gameFlags);
+            gameState.positionHistory.push_back(newHash);
+            
+            // Notify observers after a move is made
+            notifyMoveObservers();
         }
 
-        m_selectedPieceIndex = -1;
+        gameState.selectedPieceIndex = -1;
         m_currentLegalMoves.clear();
     }
 }
@@ -64,26 +71,28 @@ void GameManager::update() {
 }
 
 void GameManager::render() {
+    auto& gameState = GameState::getInstance();
+
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
     m_board.DrawChessBoard();
 
-    if (m_selectedPieceIndex != -1) {
+    if (gameState.selectedPieceIndex != -1) {
         m_board.DrawLegalMoveHighlights(m_currentLegalMoves);
     }
 
-    m_board.DrawPieces(m_selectedPieceIndex);
+    m_board.DrawPieces(gameState.selectedPieceIndex);
 
-    if (m_selectedPieceIndex != -1) {
+    if (gameState.selectedPieceIndex != -1) {
         Vector2 mousePos = GetMousePosition();
-        const auto& pieceTextures = m_board.GetPieceTextures();
-        float scale = (float)SQUARE_SIZE / pieceTextures.at(m_board.GetBoardState()[m_selectedPieceIndex]).width * 0.8f;
+        const auto& pieceTextures = gameState.pieceTextures;
+        float scale = (float)SQUARE_SIZE / pieceTextures.at(gameState.board[gameState.selectedPieceIndex]).width * 0.8f;
         Vector2 centered = {
-            mousePos.x - m_dragOffset.x - (pieceTextures.at(m_board.GetBoardState()[m_selectedPieceIndex]).width * scale) / 2,
-            mousePos.y - m_dragOffset.y - (pieceTextures.at(m_board.GetBoardState()[m_selectedPieceIndex]).height * scale) / 2
+            mousePos.x - m_dragOffset.x - (pieceTextures.at(gameState.board[gameState.selectedPieceIndex]).width * scale) / 2,
+            mousePos.y - m_dragOffset.y - (pieceTextures.at(gameState.board[gameState.selectedPieceIndex]).height * scale) / 2
         };
-        DrawTextureEx(pieceTextures.at(m_board.GetBoardState()[m_selectedPieceIndex]), centered, 0.0f, scale, WHITE);
+        DrawTextureEx(pieceTextures.at(gameState.board[gameState.selectedPieceIndex]), centered, 0.0f, scale, WHITE);
     }
 
     EndDrawing();
@@ -104,4 +113,14 @@ void GameManager::run() {
     }
 
     cleanup();
+}
+
+void GameManager::registerMoveObserver(std::function<void()> observer) {
+    m_moveObservers.push_back(observer);
+}
+
+void GameManager::notifyMoveObservers() {
+    for (const auto& observer : m_moveObservers) {
+        observer();
+    }
 }

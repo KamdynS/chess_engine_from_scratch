@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <functional>
+#include "Pieces.h"
 
 // Forward declaration of PieceBitboards
 struct PieceBitboards;

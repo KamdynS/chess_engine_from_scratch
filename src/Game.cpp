@@ -1,14 +1,15 @@
-// Game.cpp
 #include "Game.h"
+#include "GameState.h"
 #include <limits>
 #include <unordered_map>
 #include <iostream>
 
-Game::Game() : m_moveCount(1) {
-    m_board.InitializeBoard();
+Game::Game() : m_pieceManager() {
+    // ChessBoard initialization is now handled by GameState
 }
 
 std::vector<Move> Game::GenerateLegalMoves(int currentPiece, int indexOnBoard) const {
+    auto& gameState = GameState::getInstance();
     if (!IsCorrectMove(currentPiece)) {
         return {};  // Return an empty vector
     }
@@ -19,30 +20,25 @@ std::vector<Move> Game::GenerateLegalMoves(int currentPiece, int indexOnBoard) c
     case Piece::Queen:
     case Piece::Bishop:
     {
-        std::vector<Move> bishopMoves = m_pieceManager.GenerateSlidingMoves(indexOnBoard, currentPiece, m_board.GetBoardState());
-        allMoves.insert(allMoves.end(), bishopMoves.begin(), bishopMoves.end());
+        allMoves = m_pieceManager.GenerateSlidingMoves(indexOnBoard, currentPiece);
         break;
     }
     case Piece::Knight:
     {
-        std::vector<Move> knightMoves = m_pieceManager.GenerateKnightMoves(indexOnBoard, currentPiece, m_board.GetBoardState());
-        allMoves.insert(allMoves.end(), knightMoves.begin(), knightMoves.end());
+        allMoves = m_pieceManager.GenerateKnightMoves(indexOnBoard, currentPiece);
         break;
     }
     case Piece::Pawn:
     {
-        std::vector<Move> pawnMoves = m_pieceManager.GeneratePawnMoves(indexOnBoard, currentPiece, m_board.GetBoardState(), m_board.GetGameFlags());
-        allMoves.insert(allMoves.end(), pawnMoves.begin(), pawnMoves.end());
+        allMoves = m_pieceManager.GeneratePawnMoves(indexOnBoard, currentPiece);
         break;
     }
     case Piece::King:
     {
-        std::vector<Move> kingMoves = m_pieceManager.GenerateKingMoves(indexOnBoard, currentPiece, m_board.GetBoardState(), m_board.GetGameFlags(), *this);
-        allMoves.insert(allMoves.end(), kingMoves.begin(), kingMoves.end());
+        allMoves = m_pieceManager.GenerateKingMoves(indexOnBoard, currentPiece, *this);
         break;
     }
     default:
-        // Handle unexpected piece type
         std::cerr << "Unexpected piece type: " << currentPiece << std::endl;
         return {};
     }
@@ -50,20 +46,25 @@ std::vector<Move> Game::GenerateLegalMoves(int currentPiece, int indexOnBoard) c
 }
 
 std::vector<Move> Game::FilterLegalMoves(const std::vector<Move>& moves, int currentPlayer) const {
+    auto& gameState = GameState::getInstance();
     std::vector<Move> legalMoves;
     for (const auto& move : moves) {
-        // Make the move on a temporary board
-        ChessBoard tempBoard = m_board;
-        tempBoard.MakeMove(move, currentPlayer);
+        BoardState tempBoard = gameState.board;
+        GameRuleFlags tempFlags = gameState.gameFlags;
+        int tempMoveCount = gameState.moveCount;
 
-        // If the move doesn't leave the king in check, it's legal
+        Move moveCopy = move;  // Create a non-const copy
+        const_cast<Game*>(this)->MakeMove(moveCopy, currentPlayer);
+
         int currentColor = currentPlayer & 0b11000;
         if (!IsKingInCheck(currentColor)) {
             legalMoves.push_back(move);
         }
-        else {
-            std::cout << "Move " << move.startSquare << " is illegal because king is in check" << std::endl;
-        }
+
+        // Restore the original game state
+        gameState.board = tempBoard;
+        gameState.gameFlags = tempFlags;
+        gameState.moveCount = tempMoveCount;
     }
     return legalMoves;
 }
@@ -73,7 +74,7 @@ bool Game::IsPieceWhite(int pieceType) const {
 }
 
 bool Game::IsWhiteMove() const {
-    return m_moveCount % 2 != 0;
+    return GameState::getInstance().moveCount % 2 != 0;
 }
 
 bool Game::IsCorrectMove(int pieceType) const {
@@ -81,27 +82,26 @@ bool Game::IsCorrectMove(int pieceType) const {
 }
 
 bool Game::IsSquareAttackedSimple(int square, int attackingColor) const {
-    const BoardState& board = m_board.GetBoardState();
-
+    auto& gameState = GameState::getInstance();
     // Check for pawn attacks
     int pawnDirection = (attackingColor == Piece::White) ? -1 : 1;
     int pawnAttackLeft = square + pawnDirection * 7;
     int pawnAttackRight = square + pawnDirection * 9;
-    if (pawnAttackLeft >= 0 && pawnAttackLeft < 64 && board[pawnAttackLeft] == (Piece::Pawn | attackingColor)) return true;
-    if (pawnAttackRight >= 0 && pawnAttackRight < 64 && board[pawnAttackRight] == (Piece::Pawn | attackingColor)) return true;
+    if (pawnAttackLeft >= 0 && pawnAttackLeft < 64 && gameState.board[pawnAttackLeft] == (Piece::Pawn | attackingColor)) return true;
+    if (pawnAttackRight >= 0 && pawnAttackRight < 64 && gameState.board[pawnAttackRight] == (Piece::Pawn | attackingColor)) return true;
 
     // Check for knight attacks
     int knightMoves[] = { -17, -15, -10, -6, 6, 10, 15, 17 };
     for (int move : knightMoves) {
         int targetSquare = square + move;
-        if (targetSquare >= 0 && targetSquare < 64 && board[targetSquare] == (Piece::Knight | attackingColor)) return true;
+        if (targetSquare >= 0 && targetSquare < 64 && gameState.board[targetSquare] == (Piece::Knight | attackingColor)) return true;
     }
 
     // Check for king attacks (for adjacent squares)
     int kingMoves[] = { -9, -8, -7, -1, 1, 7, 8, 9 };
     for (int move : kingMoves) {
         int targetSquare = square + move;
-        if (targetSquare >= 0 && targetSquare < 64 && board[targetSquare] == (Piece::King | attackingColor)) return true;
+        if (targetSquare >= 0 && targetSquare < 64 && gameState.board[targetSquare] == (Piece::King | attackingColor)) return true;
     }
 
     // Check for sliding piece attacks (rook, bishop, queen)
@@ -109,7 +109,7 @@ bool Game::IsSquareAttackedSimple(int square, int attackingColor) const {
     for (int direction : slidingDirections) {
         int targetSquare = square + direction;
         while (targetSquare >= 0 && targetSquare < 64) {
-            int piece = board[targetSquare];
+            int piece = gameState.board[targetSquare];
             if (piece != Piece::None) {
                 if ((piece & attackingColor) &&
                     (piece == (Piece::Queen | attackingColor) ||
@@ -127,10 +127,9 @@ bool Game::IsSquareAttackedSimple(int square, int attackingColor) const {
 }
 
 bool Game::IsKingInCheck(int kingColor) const {
-    const BoardState& board = m_board.GetBoardState();
-    int kingLocation = m_pieceManager.FindKingLocation(kingColor, board);
+    auto& gameState = GameState::getInstance();
+    int kingLocation = m_pieceManager.FindKingLocation(kingColor);
     if (kingLocation == -1) {
-        // This shouldn't happen in a valid chess position
         std::cerr << "Error: King not found on the board" << std::endl;
         return false;
     }
@@ -139,11 +138,11 @@ bool Game::IsKingInCheck(int kingColor) const {
     return IsSquareAttackedSimple(kingLocation, oppositeColor);
 }
 
-bool Game::BlackCheckmate() {
-    const BoardState& board = m_board.GetBoardState();
+bool Game::BlackCheckmate() const {
+    auto& gameState = GameState::getInstance();
     for (int i = 0; i < TOTAL_SQUARES; ++i) {
-        if (board[i] & Piece::Black) {
-            std::vector<Move> possibleMoves = GenerateLegalMoves(board[i], i);
+        if (gameState.board[i] & Piece::Black) {
+            std::vector<Move> possibleMoves = GenerateLegalMoves(gameState.board[i], i);
             if (!possibleMoves.empty()) {
                 return false;
             }
@@ -156,11 +155,11 @@ bool Game::BlackCheckmate() {
     return false;
 }
 
-bool Game::WhiteCheckmate() {
-    const BoardState& board = m_board.GetBoardState();
+bool Game::WhiteCheckmate() const {
+    auto& gameState = GameState::getInstance();
     for (int i = 0; i < TOTAL_SQUARES; ++i) {
-        if (board[i] & Piece::White) {
-            std::vector<Move> possibleMoves = GenerateLegalMoves(board[i], i);
+        if (gameState.board[i] & Piece::White) {
+            std::vector<Move> possibleMoves = GenerateLegalMoves(gameState.board[i], i);
             if (!possibleMoves.empty()) {
                 return false;
             }
@@ -173,12 +172,12 @@ bool Game::WhiteCheckmate() {
     return false;
 }
 
-bool Game::GameDrawStaleMate() {
-    const BoardState& board = m_board.GetBoardState();
+bool Game::GameDrawStaleMate() const{
+    auto& gameState = GameState::getInstance();
     std::vector<Move> possibleMoves;
     for (int i = 0; i < TOTAL_SQUARES; ++i) {
-        if (board[i] != Piece::None) {
-            std::vector<Move> pieceMoves = GenerateLegalMoves(board[i], i);
+        if (gameState.board[i] != Piece::None) {
+            std::vector<Move> pieceMoves = GenerateLegalMoves(gameState.board[i], i);
             possibleMoves.insert(possibleMoves.end(), pieceMoves.begin(), pieceMoves.end());
         }
     }
@@ -189,21 +188,17 @@ bool Game::GameDrawStaleMate() {
     return false;
 }
 
-bool Game::GameDrawInsufficientMaterial() const {
-    const PieceBitboards& bitboards = m_board.GetBitboards();
-    // ... (rest of the implementation remains the same)
-}
-
-bool Game::GameDrawFiftyMove() const {
-    return m_board.GetGameFlags().halfMoveClock >= 100;  // 50 full moves = 100 half-moves
+bool Game::GameDrawFiftyMove() const{
+    return GameState::getInstance().gameFlags.halfMoveClock >= 100;  // 50 full moves = 100 half-moves
 }
 
 bool Game::GameDrawThreefold() const {
-    if (m_positionHistory.size() < 5) return false; // Need at least 5 moves for a threefold repetition
+    auto& gameState = GameState::getInstance();
+    if (gameState.positionHistory.size() < 5) return false; // Need at least 5 moves for a threefold repetition
 
     std::unordered_map<uint64_t, int> positionCounts;
 
-    for (const auto& hash : m_positionHistory) {
+    for (const auto& hash : gameState.positionHistory) {
         positionCounts[hash]++;
         if (positionCounts[hash] >= 3) {
             return true;
@@ -214,14 +209,15 @@ bool Game::GameDrawThreefold() const {
 }
 
 bool Game::GameDrawInsufficientMaterial() const {
+    auto& gameState = GameState::getInstance();
     // Combine all pieces except kings into a single bitboard
     Bitboard::BitboardType allPieces =
-        bitboards.WhitePawns.board | bitboards.WhiteKnights.board |
-        bitboards.WhiteBishops.board | bitboards.WhiteRooks.board |
-        bitboards.WhiteQueens.board |
-        bitboards.BlackPawns.board | bitboards.BlackKnights.board |
-        bitboards.BlackBishops.board | bitboards.BlackRooks.board |
-        bitboards.BlackQueens.board;
+        gameState.bitboards.WhitePawns.board | gameState.bitboards.WhiteKnights.board |
+        gameState.bitboards.WhiteBishops.board | gameState.bitboards.WhiteRooks.board |
+        gameState.bitboards.WhiteQueens.board |
+        gameState.bitboards.BlackPawns.board | gameState.bitboards.BlackKnights.board |
+        gameState.bitboards.BlackBishops.board | gameState.bitboards.BlackRooks.board |
+        gameState.bitboards.BlackQueens.board;
 
     // If no pieces left besides kings, it's a draw
     if (allPieces == 0) return true;
@@ -231,17 +227,17 @@ bool Game::GameDrawInsufficientMaterial() const {
 
     // Check for single minor piece (bishop or knight)
     if (__builtin_popcountll(allPieces) == 1) {
-        return (allPieces & (bitboards.WhiteKnights.board | bitboards.BlackKnights.board |
-            bitboards.WhiteBishops.board | bitboards.BlackBishops.board)) != 0;
+        return (allPieces & (gameState.bitboards.WhiteKnights.board | gameState.bitboards.BlackKnights.board |
+            gameState.bitboards.WhiteBishops.board | gameState.bitboards.BlackBishops.board)) != 0;
     }
 
     // Check for two knights
     if (__builtin_popcountll(allPieces) == 2) {
-        return allPieces == bitboards.WhiteKnights.board || allPieces == bitboards.BlackKnights.board;
+        return allPieces == gameState.bitboards.WhiteKnights.board || allPieces == gameState.bitboards.BlackKnights.board;
     }
 
     // Check for bishops
-    Bitboard::BitboardType bishopPieces = bitboards.WhiteBishops.board | bitboards.BlackBishops.board;
+    Bitboard::BitboardType bishopPieces = gameState.bitboards.WhiteBishops.board | gameState.bitboards.BlackBishops.board;
     if (allPieces == bishopPieces) {
         // Check if bishops are on the same color
         const Bitboard::BitboardType LIGHT_SQUARES = 0x55AA55AA55AA55AAULL;
@@ -252,3 +248,39 @@ bool Game::GameDrawInsufficientMaterial() const {
     return false;
 }
 
+void Game::MakeMove(Move& move, int currentPiece) {
+    auto& gameState = GameState::getInstance();
+    if (move.startSquare != move.targetSquare) {
+        bool isPawnMove = (currentPiece & 7) == Piece::Pawn;
+        bool isCapture = gameState.board[move.targetSquare] != Piece::None || move.isEnPassant;
+
+        if (isPawnMove || isCapture) {
+            gameState.gameFlags.halfMoveClock = 0;
+        } else {
+            gameState.gameFlags.halfMoveClock++;
+        }
+
+        gameState.board[move.startSquare] = Piece::None;
+
+        if (move.isPromotion) {
+            gameState.board[move.targetSquare] = (currentPiece & Piece::White) ? Piece::WhiteQueen : Piece::BlackQueen;
+            move.promotionPiece = (currentPiece & Piece::White) ? Piece::WhiteQueen : Piece::BlackQueen;
+        } else {
+            gameState.board[move.targetSquare] = currentPiece;
+        }
+
+        if (move.isEnPassant) {
+            int capturedPawnSquare = move.targetSquare + ((currentPiece & Piece::White) ? 8 : -8);
+            gameState.board[capturedPawnSquare] = Piece::None;
+        } else if (move.isCastling) {
+            gameState.board[move.rookStartSquare] = Piece::None;
+            gameState.board[move.rookTargetSquare] = (currentPiece & Piece::White) ? Piece::WhiteRook : Piece::BlackRook;
+        }
+
+        m_pieceManager.UpdateBitboards(move, currentPiece);
+        gameState.moveCount++;
+
+        // This was previously in ChessBoard, consider if it's still needed and where it should be called
+        // UpdateChessPieces();
+    }
+}

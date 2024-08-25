@@ -5,11 +5,15 @@
 #include "Pieces.h"
 #include "ZobristHash.h"
 #include <vector>
+#include <functional>
 
 class GameManager {
 public:
     GameManager();
     void run();
+
+    // Observer pattern
+    void registerMoveObserver(std::function<void()> observer);
 
 private:
     void initialize();
@@ -17,13 +21,12 @@ private:
     void update();
     void render();
     void cleanup();
+    void notifyMoveObservers();
 
     ChessBoard m_board;
     Game m_game;
-    PieceManager m_pieceManager;
     ZobristHash m_zobristHash;
     std::vector<Move> m_currentLegalMoves;
-    int m_selectedPieceIndex;
     Vector2 m_dragOffset;
-    std::vector<uint64_t> m_positionHistory;
+    std::vector<std::function<void()>> m_moveObservers;
 };

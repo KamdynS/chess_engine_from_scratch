@@ -1,5 +1,4 @@
 #include "Pieces.h"
-#include "ChessBoard.h"
 #include "Game.h"
 #include <iostream>
 #include <algorithm>
@@ -11,31 +10,9 @@ PieceManager::PieceManager() {
     };
 }
 
-SquareDistances PieceManager::CalculateDistances(int squareIndex) const {
-    SquareDistances distances;
-
-    // Calculate row and column from squareIndex
-    int row = squareIndex / 8;
-    int col = squareIndex % 8;
-
-    // Calculate distances to edges
-    distances.top = row;
-    distances.bottom = 7 - row;
-    distances.left = col;
-    distances.right = 7 - col;
-
-    // Calculate diagonal distances
-    // Use std::min to find the shorter distance for diagonals
-    distances.topLeft = std::min(distances.top, distances.left);
-    distances.topRight = std::min(distances.top, distances.right);
-    distances.bottomLeft = std::min(distances.bottom, distances.left);
-    distances.bottomRight = std::min(distances.bottom, distances.right);
-
-    return distances;
-}
-
  //Generate moves that slide. Goes all the way until it hits a piece or edge of board. Will work with Queen, Bishop, or Knight.
-std::vector<Move> PieceManager::GenerateSlidingMoves(int indexOnBoard, int pieceType, const BoardState& board) const {
+std::vector<Move> PieceManager::GenerateSlidingMoves(int indexOnBoard, int pieceType) const {
+    auto& gameState = GameState::getInstance();
     std::vector<Move> moves;
     int currentRow = indexOnBoard / 8;
     int currentCol = indexOnBoard % 8;
@@ -53,16 +30,16 @@ std::vector<Move> PieceManager::GenerateSlidingMoves(int indexOnBoard, int piece
                 break;  // Off the board
             }
             int target = newRow * 8 + newCol;
-            if (board[target] != Piece::None) {
+            if (gameState.board[target] != Piece::None) {
                 // Add capture move if it's an opponent's piece
-                if ((board[target] & Piece::White) != (pieceType & Piece::White)) {
+                if ((gameState.board[target] & Piece::White) != (pieceType & Piece::White)) {
                     moves.push_back({ indexOnBoard, target });
                 }
                 break;
             }
             moves.push_back({ indexOnBoard, target });
         }
-        };
+    };
 
     if (checkDiagonal) {
         for (int i = 4; i < m_directions.size(); i++) {
@@ -78,7 +55,8 @@ std::vector<Move> PieceManager::GenerateSlidingMoves(int indexOnBoard, int piece
     return moves;
 }
 
-std::vector<Move> PieceManager::GenerateKnightMoves(int indexOnBoard, int pieceType, const BoardState& board) const {
+std::vector<Move> PieceManager::GenerateKnightMoves(int indexOnBoard, int pieceType) const {
+    auto& gameState = GameState::getInstance();
     std::vector<Move> moves;
     int currentRow = indexOnBoard / 8;
     int currentCol = indexOnBoard % 8;
@@ -98,8 +76,8 @@ std::vector<Move> PieceManager::GenerateKnightMoves(int indexOnBoard, int pieceT
             int target = newRow * 8 + newCol;
 
             // Check if the square is empty or occupied by an opponent's piece
-            if (board[target] == Piece::None ||
-                ((board[target] & Piece::White) != (pieceType & Piece::White))) {
+            if (gameState.board[target] == Piece::None ||
+                ((gameState.board[target] & Piece::White) != (pieceType & Piece::White))) {
                 moves.push_back({ indexOnBoard, target });
             }
         }
@@ -108,7 +86,8 @@ std::vector<Move> PieceManager::GenerateKnightMoves(int indexOnBoard, int pieceT
     return moves;
 }
 
-std::vector<Move> PieceManager::GeneratePawnMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags) const {
+std::vector<Move> PieceManager::GeneratePawnMoves(int indexOnBoard, int pieceType) const {
+    auto& gameState = GameState::getInstance();
     std::vector<Move> moves;
     int currentRow = indexOnBoard / 8;
     int currentCol = indexOnBoard % 8;
@@ -120,14 +99,14 @@ std::vector<Move> PieceManager::GeneratePawnMoves(int indexOnBoard, int pieceTyp
     int newRow = currentRow + direction;
     if (newRow >= 0 && newRow < 8) {
         int target = newRow * 8 + currentCol;
-        if (board[target] == Piece::None) {
+        if (gameState.board[target] == Piece::None) {
             Move move = { indexOnBoard, target };
             moves.push_back(move);
             // Check double move if it's the pawn's first move
             if ((direction == -1 && currentRow == 6) || (direction == 1 && currentRow == 1)) {
                 newRow += direction;
                 target = newRow * 8 + currentCol;
-                if (board[target] == Piece::None) {
+                if (gameState.board[target] == Piece::None) {
                     moves.push_back({ indexOnBoard, target });
                 }
             }
@@ -139,8 +118,8 @@ std::vector<Move> PieceManager::GeneratePawnMoves(int indexOnBoard, int pieceTyp
         int newCol = currentCol + colOffset;
         if (newCol >= 0 && newCol < 8) {
             int target = (currentRow + direction) * 8 + newCol;
-            if (board[target] != Piece::None &&
-                ((board[target] & Piece::White) != (pieceType & Piece::White))) {
+            if (gameState.board[target] != Piece::None &&
+                ((gameState.board[target] & Piece::White) != (pieceType & Piece::White))) {
                 Move move = { indexOnBoard, target };
                 // Check for promotion
                 if ((direction == -1 && newRow == 0) || (direction == 1 && newRow == 7)) {
@@ -151,15 +130,15 @@ std::vector<Move> PieceManager::GeneratePawnMoves(int indexOnBoard, int pieceTyp
         }
     }
 
-    if (flags.enPassantTargetSquare != -1) {
+    if (gameState.gameFlags.enPassantTargetSquare != -1) {
         // Check if the current pawn is in the correct position to make an en passant capture
         if ((pieceType & Piece::White && indexOnBoard / 8 == 3) ||
             (pieceType & Piece::Black && indexOnBoard / 8 == 4)) {
             // Check if the en passant target is adjacent to the pawn
-            if (abs(indexOnBoard % 8 - flags.enPassantTargetSquare % 8) == 1) {
+            if (abs(indexOnBoard % 8 - gameState.gameFlags.enPassantTargetSquare % 8) == 1) {
                 Move enPassantMove;
                 enPassantMove.startSquare = indexOnBoard;
-                enPassantMove.targetSquare = flags.enPassantTargetSquare;
+                enPassantMove.targetSquare = gameState.gameFlags.enPassantTargetSquare;
                 enPassantMove.isEnPassant = true;
                 moves.push_back(enPassantMove);
             }
@@ -169,7 +148,8 @@ std::vector<Move> PieceManager::GeneratePawnMoves(int indexOnBoard, int pieceTyp
     return moves;
 }
 
-std::vector<Move> PieceManager::GenerateKingMoves(int indexOnBoard, int pieceType, const BoardState& board, const GameRuleFlags& flags, const Game& game) const {
+std::vector<Move> PieceManager::GenerateKingMoves(int indexOnBoard, int pieceType, const Game& game) const {
+    auto& gameState = GameState::getInstance();
     std::vector<Move> moves;
     int currentRow = indexOnBoard / 8;
     int currentCol = indexOnBoard % 8;
@@ -183,9 +163,9 @@ std::vector<Move> PieceManager::GenerateKingMoves(int indexOnBoard, int pieceTyp
             continue;  // Off the board
         }
         int target = (newRow * 8) + newCol;
-        if (board[target] != Piece::None) {
+        if (gameState.board[target] != Piece::None) {
             // Add capture move if it's an opponent's piece
-            if ((board[target] & Piece::White) != (pieceType & Piece::White)) {
+            if ((gameState.board[target] & Piece::White) != (pieceType & Piece::White)) {
                 moves.push_back({ indexOnBoard, target });
             }
             continue;
@@ -194,7 +174,7 @@ std::vector<Move> PieceManager::GenerateKingMoves(int indexOnBoard, int pieceTyp
     }
 
     // Castle if available
-    if (this->CanCastle(pieceType, true, board, flags, game)) {  // Kingside
+    if (this->CanCastle(pieceType, true, game)) {  // Kingside
         Move castlingMove;
         castlingMove.startSquare = indexOnBoard;
         castlingMove.targetSquare = indexOnBoard + 2;
@@ -204,7 +184,7 @@ std::vector<Move> PieceManager::GenerateKingMoves(int indexOnBoard, int pieceTyp
         moves.push_back(castlingMove);
     }
 
-    if (this->CanCastle(pieceType, false, board, flags, game)) {  // Queenside
+    if (this->CanCastle(pieceType, false, game)) {  // Queenside
         Move castlingMove;
         castlingMove.startSquare = indexOnBoard;
         castlingMove.targetSquare = indexOnBoard - 2;
@@ -218,27 +198,28 @@ std::vector<Move> PieceManager::GenerateKingMoves(int indexOnBoard, int pieceTyp
 }
 
 
-bool PieceManager::CanCastle(int kingType, bool kingSide, const BoardState& board, const GameRuleFlags& flags, const Game& game) const {
+bool PieceManager::CanCastle(int kingType, bool kingSide, const Game& game) const {
+    auto& gameState = GameState::getInstance();
     int kingColor = (kingType & Piece::White) ? Piece::White : Piece::Black;
     int oppositeColor = (kingColor == Piece::White) ? Piece::Black : Piece::White;
     int kingStartSquare = (kingColor == Piece::White) ? ChessSquares::E1 : ChessSquares::E8;
 
     // Check if king or rook has moved
     if (kingColor == Piece::White) {
-        if (flags.whiteKingHasMoved) return false;
-        if (kingSide && flags.h1RookHasMoved) return false;
-        if (!kingSide && flags.a1RookHasMoved) return false;
+        if (gameState.gameFlags.whiteKingHasMoved) return false;
+        if (kingSide && gameState.gameFlags.h1RookHasMoved) return false;
+        if (!kingSide && gameState.gameFlags.a1RookHasMoved) return false;
     }
     else {
-        if (flags.blackKingHasMoved) return false;
-        if (kingSide && flags.h8RookHasMoved) return false;
-        if (!kingSide && flags.a8RookHasMoved) return false;
+        if (gameState.gameFlags.blackKingHasMoved) return false;
+        if (kingSide && gameState.gameFlags.h8RookHasMoved) return false;
+        if (!kingSide && gameState.gameFlags.a8RookHasMoved) return false;
     }
 
     // Check if squares between king and rook are empty
     int direction = kingSide ? 1 : -1;
     for (int i = 1; i <= (kingSide ? 2 : 3); i++) {
-        if (board[kingStartSquare + i * direction] != Piece::None) return false;
+        if (gameState.board[kingStartSquare + i * direction] != Piece::None) return false;
     }
 
     // Check if king is in check or passes through attacked square
@@ -250,33 +231,35 @@ bool PieceManager::CanCastle(int kingType, bool kingSide, const BoardState& boar
 }
 
 // Standalone function to update bitboards
-void PieceManager::UpdateBitboards(PieceBitboards& bitboards, const Move& move, int currentPiece) {
-    // Helper function to get a reference to the appropriate Bitboard
-    auto getBitboard = [&](int pieceType) -> Bitboard& {
+void PieceManager::UpdateBitboards(const Move& move, int currentPiece) {
+    auto& gameState = GameState::getInstance();
+
+    // Helper function to get a pointer to the appropriate Bitboard
+    auto getBitboard = [&](int pieceType) -> Bitboard* {
         switch (pieceType) {
-        case Piece::WhitePawn: return bitboards.WhitePawns;
-        case Piece::WhiteKnight: return bitboards.WhiteKnights;
-        case Piece::WhiteBishop: return bitboards.WhiteBishops;
-        case Piece::WhiteRook: return bitboards.WhiteRooks;
-        case Piece::WhiteQueen: return bitboards.WhiteQueens;
-        case Piece::WhiteKing: return bitboards.WhiteKing;
-        case Piece::BlackPawn: return bitboards.BlackPawns;
-        case Piece::BlackKnight: return bitboards.BlackKnights;
-        case Piece::BlackBishop: return bitboards.BlackBishops;
-        case Piece::BlackRook: return bitboards.BlackRooks;
-        case Piece::BlackQueen: return bitboards.BlackQueens;
-        case Piece::BlackKing: return bitboards.BlackKing;
+        case Piece::WhitePawn: return &gameState.bitboards.WhitePawns;
+        case Piece::WhiteKnight: return &gameState.bitboards.WhiteKnights;
+        case Piece::WhiteBishop: return &gameState.bitboards.WhiteBishops;
+        case Piece::WhiteRook: return &gameState.bitboards.WhiteRooks;
+        case Piece::WhiteQueen: return &gameState.bitboards.WhiteQueens;
+        case Piece::WhiteKing: return &gameState.bitboards.WhiteKing;
+        case Piece::BlackPawn: return &gameState.bitboards.BlackPawns;
+        case Piece::BlackKnight: return &gameState.bitboards.BlackKnights;
+        case Piece::BlackBishop: return &gameState.bitboards.BlackBishops;
+        case Piece::BlackRook: return &gameState.bitboards.BlackRooks;
+        case Piece::BlackQueen: return &gameState.bitboards.BlackQueens;
+        case Piece::BlackKing: return &gameState.bitboards.BlackKing;
         default:
             throw std::invalid_argument("Invalid piece type in getBitboard");
         }
-        };
+    };
 
     // Get the bitboard for the current piece
-    Bitboard& currentBitboard = getBitboard(currentPiece);
+    Bitboard* currentBitboard = getBitboard(currentPiece);
 
     // Update the bitboard for the moving piece
-    currentBitboard.clear(move.startSquare);
-    currentBitboard.set(move.targetSquare);
+    currentBitboard->clear(move.startSquare);
+    currentBitboard->set(move.targetSquare);
 
     // Create a mask for clearing the captured piece (if any)
     Bitboard::BitboardType captureMask = ~(1ULL << move.targetSquare);
@@ -285,34 +268,35 @@ void PieceManager::UpdateBitboards(PieceBitboards& bitboards, const Move& move, 
     for (int pieceType : {Piece::WhitePawn, Piece::WhiteKnight, Piece::WhiteBishop, Piece::WhiteRook, Piece::WhiteQueen, Piece::WhiteKing,
         Piece::BlackPawn, Piece::BlackKnight, Piece::BlackBishop, Piece::BlackRook, Piece::BlackQueen, Piece::BlackKing}) {
         if (pieceType != currentPiece) {
-            getBitboard(pieceType).board &= captureMask;
+            getBitboard(pieceType)->board &= captureMask;
         }
     }
 
     // Handle special moves
     if (move.isEnPassant) {
         int capturedPawnSquare = move.targetSquare + ((currentPiece & Piece::White) ? 8 : -8);
-        getBitboard((currentPiece & Piece::White) ? Piece::BlackPawn : Piece::WhitePawn).clear(capturedPawnSquare);
+        getBitboard((currentPiece & Piece::White) ? Piece::BlackPawn : Piece::WhitePawn)->clear(capturedPawnSquare);
     }
     else if (move.isCastling) {
         // Update rook position for castling
-        Bitboard& rookBitboard = getBitboard((currentPiece & Piece::White) ? Piece::WhiteRook : Piece::BlackRook);
-        rookBitboard.clear(move.rookStartSquare);
-        rookBitboard.set(move.rookTargetSquare);
+        Bitboard* rookBitboard = getBitboard((currentPiece & Piece::White) ? Piece::WhiteRook : Piece::BlackRook);
+        rookBitboard->clear(move.rookStartSquare);
+        rookBitboard->set(move.rookTargetSquare);
     }
 
     // Handle pawn promotion
     if (move.isPromotion) {
-        currentBitboard.clear(move.targetSquare);  // Remove pawn from its bitboard
-        getBitboard(move.promotionPiece).set(move.targetSquare);  // Add the promoted piece to its bitboard
+        currentBitboard->clear(move.targetSquare);  // Remove pawn from its bitboard
+        getBitboard(move.promotionPiece)->set(move.targetSquare);  // Add the promoted piece to its bitboard
     }
 }
 
-int PieceManager::FindKingLocation(int kingColor, const BoardState& board) const {
+int PieceManager::FindKingLocation(int kingColor) const {
+    auto& gameState = GameState::getInstance();
     int targetKing = (kingColor & Piece::White) ? Piece::WhiteKing : Piece::BlackKing;
 
     for (int i = 0; i < TOTAL_SQUARES; i++) {
-        if (board[i] == targetKing) {
+        if (gameState.board[i] == targetKing) {
             return i;
         }
     }
@@ -320,19 +304,20 @@ int PieceManager::FindKingLocation(int kingColor, const BoardState& board) const
     return -1;  // King not found (shouldn't happen in a valid chess position)
 }
 
-void PieceManager::ClearAllBitboards(PieceBitboards& bitboards) {
+void PieceManager::ClearAllBitboards() {
+    auto& gameState = GameState::getInstance();
     // Implement the ClearAllBitboards function here
     // This function was declared in the header but not implemented in the original code
-    bitboards.WhitePawns.board = 0;
-    bitboards.WhiteKnights.board = 0;
-    bitboards.WhiteBishops.board = 0;
-    bitboards.WhiteRooks.board = 0;
-    bitboards.WhiteQueens.board = 0;
-    bitboards.WhiteKing.board = 0;
-    bitboards.BlackPawns.board = 0;
-    bitboards.BlackKnights.board = 0;
-    bitboards.BlackBishops.board = 0;
-    bitboards.BlackRooks.board = 0;
-    bitboards.BlackQueens.board = 0;
-    bitboards.BlackKing.board = 0;
+    gameState.bitboards.WhitePawns.board = 0;
+    gameState.bitboards.WhiteKnights.board = 0;
+    gameState.bitboards.WhiteBishops.board = 0;
+    gameState.bitboards.WhiteRooks.board = 0;
+    gameState.bitboards.WhiteQueens.board = 0;
+    gameState.bitboards.WhiteKing.board = 0;
+    gameState.bitboards.BlackPawns.board = 0;
+    gameState.bitboards.BlackKnights.board = 0;
+    gameState.bitboards.BlackBishops.board = 0;
+    gameState.bitboards.BlackRooks.board = 0;
+    gameState.bitboards.BlackQueens.board = 0;
+    gameState.bitboards.BlackKing.board = 0;
 }
