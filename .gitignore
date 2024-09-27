@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+CMakeLists.txt
+
+*/build/*
+C:/Users/kamdy/Desktop/workspace/chess/raylib_chess/prog_chess_engine/build/*
 
 prog_chess_engine/prog_chess_engine.vcxproj
 prog_chess_engine/prog_chess_engine.vcxproj.filters

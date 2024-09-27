@@ -1,5 +1,6 @@
-#include "Game.h"
-#include "GameState.h"
+#include "include/Game.h"
+#include "include/GameState.h"
+#include "include/CommonComponents.h"
 #include <limits>
 #include <unordered_map>
 #include <iostream>

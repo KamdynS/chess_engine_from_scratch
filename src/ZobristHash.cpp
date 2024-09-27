@@ -1,4 +1,4 @@
-#include "ZobristHash.h"
+#include "include/ZobristHash.h"
 
 ZobristHash::ZobristHash() {
     initializeRandomNumbers();

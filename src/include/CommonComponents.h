@@ -58,8 +58,18 @@ struct SquareDistances {
 };
 
 struct PieceBitboards {
-    Bitboard WhitePawns, WhiteKnights, WhiteBishops, WhiteRooks, WhiteQueens, WhiteKing;
-    Bitboard BlackPawns, BlackKnights, BlackBishops, BlackRooks, BlackQueens, BlackKing;
+    Bitboard WhitePawns = 0ULL;
+    Bitboard BlackPawns = 0ULL;
+    Bitboard WhiteKnights = 0ULL;
+    Bitboard BlackKnights = 0ULL;
+    Bitboard WhiteBishops = 0ULL;
+    Bitboard BlackBishops = 0ULL;
+    Bitboard WhiteRooks = 0ULL;
+    Bitboard BlackRooks = 0ULL;
+    Bitboard WhiteQueens = 0ULL;
+    Bitboard BlackQueens = 0ULL;
+    Bitboard WhiteKing = 0ULL;
+    Bitboard BlackKing = 0ULL;
 };
 
 struct Square {
@@ -72,3 +82,27 @@ struct ChessPiece {
     Vector2 position;
     Vector2 midpoint;
 };
+
+static void iterateAllBitboards(PieceBitboards& bitboards,
+    const std::function<void(Bitboard&)>& operation,
+    int excludePiece = 0) {
+    auto applyIfNotExcluded = [&](Bitboard& bb, int pieceType) {
+        if (excludePiece != pieceType) {
+            operation(bb);
+        }
+    };
+
+    applyIfNotExcluded(bitboards.WhitePawns, Piece::WhitePawn);
+    applyIfNotExcluded(bitboards.WhiteKnights, Piece::WhiteKnight);
+    applyIfNotExcluded(bitboards.WhiteBishops, Piece::WhiteBishop);
+    applyIfNotExcluded(bitboards.WhiteRooks, Piece::WhiteRook);
+    applyIfNotExcluded(bitboards.WhiteQueens, Piece::WhiteQueen);
+    applyIfNotExcluded(bitboards.WhiteKing, Piece::WhiteKing);
+    applyIfNotExcluded(bitboards.BlackPawns, Piece::BlackPawn);
+    applyIfNotExcluded(bitboards.BlackKnights, Piece::BlackKnight);
+    applyIfNotExcluded(bitboards.BlackBishops, Piece::BlackBishop);
+    applyIfNotExcluded(bitboards.BlackRooks, Piece::BlackRook);
+    applyIfNotExcluded(bitboards.BlackQueens, Piece::BlackQueen);
+    applyIfNotExcluded(bitboards.BlackKing, Piece::BlackKing);
+}
+

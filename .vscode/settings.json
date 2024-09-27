@@ -2,5 +2,7 @@
     "files.associations": {
         "xstring": "cpp",
         "unordered_map": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": true,
+    "cmake.buildDirectory": "${workspaceFolder}/build"
 }

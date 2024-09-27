@@ -1,4 +1,6 @@
-#include "BitBoard.h"
+#include "include/BitBoard.h"
+#include "include/CommonComponents.h"
+
 
 void Bitboard::set(int square) {
     if (square >= 0 && square < 64) {
