@@ -1,5 +1,6 @@
-#include "GameManager.h"
-#include "GameState.h"
+#include "include/GameManager.h"
+#include "include/GameState.h"
+#include "include/CommonComponents.h"
 #include <iostream>
 
 GameManager::GameManager()

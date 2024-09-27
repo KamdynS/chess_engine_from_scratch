@@ -6,6 +6,7 @@
 #include "GameState.h"
 #include <unordered_map>
 #include "raylib.h"
+#include <string>
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;

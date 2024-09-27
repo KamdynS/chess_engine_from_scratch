@@ -1,5 +1,6 @@
-#include "Pieces.h"
-#include "Game.h"
+#include "include/Pieces.h"
+#include "include/Game.h"
+#include "include/CommonComponents.h"
 #include <iostream>
 #include <algorithm>
 

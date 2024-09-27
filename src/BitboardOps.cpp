@@ -1,4 +1,5 @@
-#include "BitboardOps.h"
+#include "include/BitboardOps.h"
+#include "include/CommonComponents.h"
 
 namespace BitboardOps {
 

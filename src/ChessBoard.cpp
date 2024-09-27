@@ -1,7 +1,8 @@
-#include "ChessBoard.h"
-#include "Pieces.h"
-#include "Game.h"
-#include "GameState.h"
+#include "include/ChessBoard.h"
+#include "include/Pieces.h"
+#include "include/Game.h"
+#include "include/GameState.h"
+#include "include/CommonComponents.h"
 #include <iostream>
 #include <cctype>
 
@@ -48,19 +49,19 @@ void ChessBoard::UpdateBitboardsFromBoard() {
     m_pieceManager.ClearAllBitboards();
 
     // Create a mapping of piece types to bitboard pointers
-    std::unordered_map<int, Bitboard*> pieceToBitboard = {
-    {Piece::WhitePawn, &gameState.bitboards.WhitePawns},
-    {Piece::WhiteKnight, &gameState.bitboards.WhiteKnights},
-    {Piece::WhiteBishop, &gameState.bitboards.WhiteBishops},
-    {Piece::WhiteRook, &gameState.bitboards.WhiteRooks},
-    {Piece::WhiteQueen, &gameState.bitboards.WhiteQueens},
-    {Piece::WhiteKing, &gameState.bitboards.WhiteKing},
-    {Piece::BlackPawn, &gameState.bitboards.BlackPawns},
-    {Piece::BlackKnight, &gameState.bitboards.BlackKnights},
-    {Piece::BlackBishop, &gameState.bitboards.BlackBishops},
-    {Piece::BlackRook, &gameState.bitboards.BlackRooks},
-    {Piece::BlackQueen, &gameState.bitboards.BlackQueens},
-    {Piece::BlackKing, &gameState.bitboards.BlackKing}
+    std::unordered_map<int, Bitboard*> pieceToBitboard {
+        {Piece::WhitePawn, &gameState.bitboards.WhitePawns},
+        {Piece::WhiteKnight, &gameState.bitboards.WhiteKnights},
+        {Piece::WhiteBishop, &gameState.bitboards.WhiteBishops},
+        {Piece::WhiteRook, &gameState.bitboards.WhiteRooks},
+        {Piece::WhiteQueen, &gameState.bitboards.WhiteQueens},
+        {Piece::WhiteKing, &gameState.bitboards.WhiteKing},
+        {Piece::BlackPawn, &gameState.bitboards.BlackPawns},
+        {Piece::BlackKnight, &gameState.bitboards.BlackKnights},
+        {Piece::BlackBishop, &gameState.bitboards.BlackBishops},
+        {Piece::BlackRook, &gameState.bitboards.BlackRooks},
+        {Piece::BlackQueen, &gameState.bitboards.BlackQueens},
+        {Piece::BlackKing, &gameState.bitboards.BlackKing}
     };
 
     for (int i = 0; i < TOTAL_SQUARES; ++i) {
