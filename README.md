@@ -4,22 +4,8 @@ A chess engine I built from scratch to refine my C++ skills.
 # Current progress
 This repo is a work in progress that aims to show my skills as I develop. If this message is still here, the engine is not complete yet.
 
-I have almost all the rules in place. There are some minor bugs with existing rules still to fix. 
-
-## Rules I have not yet implemented at all:
-- [ ] Any rules related to check(includes pinned pieces, moving into check, or various checkmating rules)
-- [ ] En Passant
-
-## Rules that are implemented but buggy:
-- [ ] Castling
-- [ ] Certain King moves
-
-## Rules that have been implemented already:
-- [x] All moves for queen
-- [x] All moves for bishop
-- [x] All moves for knights
-- [x] All moves for rooks
-- [x] All moves, besides en passant, for pawns
+# Rules progress
+All rules are implemented. I am going through and refactoring to follow a more object-oriented approach. This is to help interface better with the engine. Once all bug fixes are done, I will start on the engine.
 
 # Engine plans
 

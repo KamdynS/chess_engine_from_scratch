@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include "raylib.h"
 
 const int BOARD_SIZE = 8;
 const int TOTAL_SQUARES = 64;
@@ -43,4 +44,31 @@ struct ChessSquares {
     static const int A6 = 16, B6 = 17, C6 = 18, D6 = 19, E6 = 20, F6 = 21, G6 = 22, H6 = 23;
     static const int A7 = 8, B7 = 9, C7 = 10, D7 = 11, E7 = 12, F7 = 13, G7 = 14, H7 = 15;
     static const int A8 = 0, B8 = 1, C8 = 2, D8 = 3, E8 = 4, F8 = 5, G8 = 6, H8 = 7;
+};
+
+struct SquareDistances {
+    int top;
+    int bottom;
+    int left;
+    int right;
+    int topLeft;
+    int topRight;
+    int bottomLeft;
+    int bottomRight;
+};
+
+struct PieceBitboards {
+    Bitboard WhitePawns, WhiteKnights, WhiteBishops, WhiteRooks, WhiteQueens, WhiteKing;
+    Bitboard BlackPawns, BlackKnights, BlackBishops, BlackRooks, BlackQueens, BlackKing;
+};
+
+struct Square {
+    Rectangle bounds;
+    Vector2 center;
+};
+
+struct ChessPiece {
+    int type;
+    Vector2 position;
+    Vector2 midpoint;
 };

@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+
+prog_chess_engine/prog_chess_engine.vcxproj
+prog_chess_engine/prog_chess_engine.vcxproj.filters
+prog_chess_engine/.vscode/*
 # User-specific files
 *.rsuser
 *.suo
